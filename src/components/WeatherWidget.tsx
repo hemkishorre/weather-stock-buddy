@@ -310,11 +310,11 @@ const WeatherWidget = () => {
               </div>
 
               {/* Forecast Grid */}
-              <div className="grid gap-3 mt-4 grid-cols-7">
+              <div className="grid gap-2 mt-4 grid-cols-7">
                 {weeklyWeather.map((day, index) => (
                   <div 
                     key={day.forecast_date}
-                    className={`flex flex-col items-center p-4 rounded-lg transition-base ${
+                    className={`flex flex-col items-center p-5 rounded-lg transition-base ${
                       index === 0 ? 'bg-primary/10' : 'bg-muted/50 hover:bg-muted'
                     }`}
                   >
