@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Sparkles, RefreshCw, TrendingUp, AlertCircle, ShoppingCart } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface SuggestionWithQuantity {
   item: string;
@@ -33,12 +34,13 @@ const AISuggestionsEnhanced = ({ onAddToCart }: AISuggestionsEnhancedProps) => {
   const [suggestions, setSuggestions] = useState<SuggestionWithQuantity[]>([]);
   const [loading, setLoading] = useState(false);
   const [context, setContext] = useState<any>(null);
+  const [forecastDays, setForecastDays] = useState<string>("7");
 
   const fetchSuggestions = async () => {
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('ai-inventory-suggestions', {
-        body: {}
+        body: { forecastDays: parseInt(forecastDays) }
       });
 
       if (error) throw error;
@@ -113,23 +115,36 @@ const AISuggestionsEnhanced = ({ onAddToCart }: AISuggestionsEnhancedProps) => {
               Weather & shelf-life optimized recommendations
             </CardDescription>
           </div>
-          <Button
-            onClick={fetchSuggestions}
-            disabled={loading}
-            variant="default"
-          >
-            {loading ? (
-              <>
-                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                Analyzing...
-              </>
-            ) : (
-              <>
-                <Sparkles className="w-4 h-4 mr-2" />
-                Get Suggestions
-              </>
-            )}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Select value={forecastDays} onValueChange={setForecastDays}>
+              <SelectTrigger className="w-[140px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="7">1 Week</SelectItem>
+                <SelectItem value="14">2 Weeks</SelectItem>
+                <SelectItem value="21">3 Weeks</SelectItem>
+                <SelectItem value="30">1 Month</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button
+              onClick={fetchSuggestions}
+              disabled={loading}
+              variant="default"
+            >
+              {loading ? (
+                <>
+                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                  Analyzing...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Get Suggestions
+                </>
+              )}
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent>

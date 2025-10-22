@@ -12,6 +12,8 @@ serve(async (req) => {
   }
 
   try {
+    const { forecastDays = 7 } = await req.json().catch(() => ({ forecastDays: 7 }));
+    
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
       throw new Error('LOVABLE_API_KEY is not configured');
@@ -33,7 +35,7 @@ serve(async (req) => {
       throw new Error('Unauthorized');
     }
 
-    console.log(`Processing AI suggestions for user: ${user.id}`);
+    console.log(`Processing AI suggestions for user: ${user.id} (${forecastDays} days forecast)`);
 
     // Fetch user's inventory needs
     const { data: inventoryNeeds, error: invError } = await supabase
@@ -58,9 +60,9 @@ serve(async (req) => {
     const longitude = profile?.weather_longitude || -74.0060;
     const locationName = profile?.weather_location_name || 'New York, NY';
 
-    // Fetch weather data for the next 7 days
+    // Fetch weather data for the selected forecast period
     const today = new Date();
-    const sevenDays = Array.from({ length: 7 }, (_, i) => {
+    const forecastDates = Array.from({ length: forecastDays }, (_, i) => {
       const date = new Date(today);
       date.setDate(today.getDate() + i);
       return date.toISOString().split('T')[0];
@@ -71,7 +73,7 @@ serve(async (req) => {
       .from('weather_cache')
       .select('*')
       .eq('location', locationKey)
-      .in('forecast_date', sevenDays)
+      .in('forecast_date', forecastDates)
       .order('forecast_date', { ascending: true });
 
     // Fetch all available products from all wholesalers
@@ -103,14 +105,14 @@ serve(async (req) => {
         ).join('\n')
       : 'No weather data available.';
 
-    const systemPrompt = `You are an intelligent supply chain assistant for food vendors. Your role is to analyze the vendor's inventory needs alongside a 7-day weather forecast to provide actionable, smart recommendations with specific quantities.
+    const systemPrompt = `You are an intelligent supply chain assistant for food vendors. Your role is to analyze the vendor's inventory needs alongside a ${forecastDays}-day weather forecast to provide actionable, smart recommendations with specific quantities.
 
 Location: ${locationName}
 
 Current Inventory Needs:
 ${inventoryContext}
 
-Weather Forecast (Next 7 Days):
+Weather Forecast (Next ${forecastDays} Days):
 ${weatherContext}
 
 Available Product Categories: ${allProducts ? [...new Set(allProducts.map((p: any) => p.category))].join(', ') : 'Various'}
@@ -125,7 +127,9 @@ Provide 3-5 specific, actionable recommendations considering:
 2. **Weather Impact on Shelf Life**: High humidity and heat reduce shelf life significantly
    - In hot/humid weather, reduce fresh produce quantities by 20-30%
    - In cool/dry weather, you can order slightly more
-3. **Weekly Demand Patterns**: Match quantities to the 7-day weather forecast
+3. **Forecast Period Planning**: Match quantities to the ${forecastDays}-day forecast period
+   - For longer periods (2+ weeks), suggest larger quantities for dry goods
+   - Still be cautious with perishables even in longer periods
    - Don't over-order perishables if hot weather is coming
    - Order more of items that benefit from the weather conditions
 4. **Priority levels** of inventory needs
@@ -165,7 +169,7 @@ Example format:
   }
 ]
 
-**CRITICAL**: Always factor in shelf life when suggesting quantities. It's better to order slightly less of perishables and restock mid-week than to risk spoilage and waste.
+**CRITICAL**: Always factor in shelf life and the ${forecastDays}-day forecast period when suggesting quantities. It's better to order slightly less of perishables and restock as needed than to risk spoilage and waste. For longer periods, prioritize dry goods and items with longer shelf life.
 
 If no inventory items are specified, provide general recommendations for a food vendor based on the weather patterns and shelf life considerations.`;
 
@@ -181,7 +185,7 @@ If no inventory items are specified, provide general recommendations for a food 
         model: 'google/gemini-2.5-flash',
         messages: [
           { role: 'system', content: systemPrompt },
-          { role: 'user', content: 'Based on my inventory needs and the 7-day weather forecast, what are your smart recommendations with specific quantities to buy?' }
+          { role: 'user', content: `Based on my inventory needs and the ${forecastDays}-day weather forecast, what are your smart recommendations with specific quantities to buy?` }
         ],
         temperature: 0.7,
       }),
