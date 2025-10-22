@@ -229,21 +229,6 @@ const WeatherWidget = () => {
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
-  const getWeatherImpact = () => {
-    if (weeklyWeather.length === 0) return "Loading forecast...";
-    
-    const today = weeklyWeather[0];
-    
-    if (today.temperature > 25) {
-      return "Hot day - expect higher demand for cold drinks and fresh produce.";
-    } else if (today.condition.toLowerCase().includes("rain")) {
-      return "Rainy weather - consider stocking comfort foods and hot beverages.";
-    } else if (today.temperature < 15) {
-      return "Cold weather - warm meals and hot drinks will be popular.";
-    }
-    return "Pleasant weather - normal inventory levels recommended.";
-  };
-
   if (loading) {
     return (
       <Card className="shadow-card">
@@ -331,16 +316,6 @@ const WeatherWidget = () => {
                     <p className="text-xs text-muted-foreground">{day.humidity}%</p>
                   </div>
                 ))}
-              </div>
-
-              {/* AI Suggestion */}
-              <div className="p-3 bg-success/10 border border-success/20 rounded-lg">
-                <p className="text-sm font-medium text-success-foreground">
-                  📊 Supply Suggestion
-                </p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {getWeatherImpact()}
-                </p>
               </div>
             </>
           )}
