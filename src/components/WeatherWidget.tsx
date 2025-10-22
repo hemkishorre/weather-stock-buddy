@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { LocationSearch } from "@/components/LocationSearch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -33,6 +34,7 @@ const WeatherWidget = () => {
   const [showLocationDialog, setShowLocationDialog] = useState(false);
   const [selectedLocationName, setSelectedLocationName] = useState("New York, NY");
   const [userId, setUserId] = useState<string | null>(null);
+  const [forecastDays, setForecastDays] = useState<number>(7);
 
   useEffect(() => {
     const initUser = async () => {
@@ -62,10 +64,10 @@ const WeatherWidget = () => {
     initUser();
   }, []);
 
-  const fetchWeatherFromCache = async (lat: number, lon: number) => {
+  const fetchWeatherFromCache = async (lat: number, lon: number, days: number = forecastDays) => {
     try {
       const today = new Date();
-      const dates = Array.from({ length: 7 }, (_, i) => {
+      const dates = Array.from({ length: days }, (_, i) => {
         const date = new Date(today);
         date.setDate(today.getDate() + i);
         return date.toISOString().split('T')[0];
@@ -183,7 +185,7 @@ const WeatherWidget = () => {
       if (!location.latitude || !location.longitude) return;
       
       setLoading(true);
-      const hasCache = await fetchWeatherFromCache(location.latitude, location.longitude);
+      const hasCache = await fetchWeatherFromCache(location.latitude, location.longitude, forecastDays);
       
       if (!hasCache) {
         await refreshWeatherData();
@@ -193,7 +195,7 @@ const WeatherWidget = () => {
     };
 
     initWeather();
-  }, [location]);
+  }, [location, forecastDays]);
 
   const getWeatherIcon = (condition: string) => {
     const conditionLower = condition.toLowerCase();
@@ -268,16 +270,29 @@ const WeatherWidget = () => {
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <Cloud className="w-5 h-5" />
-              Weekly Weather Forecast
+              Weather Forecast
             </CardTitle>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => refreshWeatherData()}
-              disabled={refreshing}
-            >
-              <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
-            </Button>
+            <div className="flex items-center gap-2">
+              <Select value={forecastDays.toString()} onValueChange={(value) => setForecastDays(parseInt(value))}>
+                <SelectTrigger className="w-[130px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="7">1 Week</SelectItem>
+                  <SelectItem value="14">2 Weeks</SelectItem>
+                  <SelectItem value="21">3 Weeks</SelectItem>
+                  <SelectItem value="30">1 Month</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => refreshWeatherData()}
+                disabled={refreshing}
+              >
+                <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+              </Button>
+            </div>
           </div>
           
           <Button
@@ -307,47 +322,32 @@ const WeatherWidget = () => {
                 <span>Humidity: {weeklyWeather[0].humidity}%</span>
               </div>
 
-              {/* Weekly Forecast Grid - Ensures 7 items are always displayed */}
-              <div className="grid grid-cols-7 gap-2 mt-4">
-                {Array.from({ length: 7 }).map((_, index) => {
-                  const day = weeklyWeather[index];
-                  if (day) {
-                    return (
-                      <div 
-                        key={day.forecast_date}
-                        className={`flex flex-col items-center p-3 rounded-lg transition-base ${
-                          index === 0 ? 'bg-primary/10' : 'bg-muted/50 hover:bg-muted'
-                        }`}
-                      >
-                        <p className="text-xs font-semibold mb-0.5">
-                          {getDayName(day.forecast_date)}
-                        </p>
-                        <p className="text-xs text-muted-foreground mb-1">
-                          {getFormattedDate(day.forecast_date)}
-                        </p>
-                        <div className="my-1">
-                          {getWeatherIcon(day.condition)}
-                        </div>
-                        <p className="text-sm font-bold">{Math.round(day.temperature)}°</p>
-                        <p className="text-xs text-muted-foreground">{day.humidity}%</p>
-                      </div>
-                    );
-                  } else {
-                    // Placeholder for missing days
-                    return (
-                      <div 
-                        key={`placeholder-${index}`}
-                        className="flex flex-col items-center p-3 rounded-lg bg-muted/30"
-                      >
-                        <p className="text-xs font-semibold mb-0.5 text-muted-foreground">--</p>
-                        <p className="text-xs text-muted-foreground mb-1">--</p>
-                        <div className="my-1 w-6 h-6 rounded-full bg-muted"></div>
-                        <p className="text-sm font-bold text-muted-foreground">--</p>
-                        <p className="text-xs text-muted-foreground">--</p>
-                      </div>
-                    );
-                  }
-                })}
+              {/* Forecast Grid - Dynamic based on selected period */}
+              <div className={`grid gap-2 mt-4 ${
+                forecastDays <= 7 ? 'grid-cols-7' : 
+                forecastDays <= 14 ? 'grid-cols-7' : 
+                'grid-cols-6'
+              }`}>
+                {weeklyWeather.map((day, index) => (
+                  <div 
+                    key={day.forecast_date}
+                    className={`flex flex-col items-center p-2.5 rounded-lg transition-base ${
+                      index === 0 ? 'bg-primary/10' : 'bg-muted/50 hover:bg-muted'
+                    }`}
+                  >
+                    <p className="text-xs font-semibold mb-0.5">
+                      {getDayName(day.forecast_date)}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground mb-1">
+                      {getFormattedDate(day.forecast_date)}
+                    </p>
+                    <div className="my-1">
+                      {getWeatherIcon(day.condition)}
+                    </div>
+                    <p className="text-sm font-bold">{Math.round(day.temperature)}°</p>
+                    <p className="text-[10px] text-muted-foreground">{day.humidity}%</p>
+                  </div>
+                ))}
               </div>
 
               {/* AI Suggestion */}
