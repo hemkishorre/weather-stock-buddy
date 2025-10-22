@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Cloud, CloudRain, Sun, Wind, RefreshCw, MapPin, Edit2, Check, X } from "lucide-react";
+import { Cloud, CloudRain, Sun, Wind, RefreshCw, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -21,17 +21,31 @@ interface LocationData {
   name: string;
 }
 
+const LOCATIONS: LocationData[] = [
+  { name: "New York, NY", latitude: 40.7128, longitude: -74.0060 },
+  { name: "Los Angeles, CA", latitude: 34.0522, longitude: -118.2437 },
+  { name: "Chicago, IL", latitude: 41.8781, longitude: -87.6298 },
+  { name: "Houston, TX", latitude: 29.7604, longitude: -95.3698 },
+  { name: "Miami, FL", latitude: 25.7617, longitude: -80.1918 },
+  { name: "London, UK", latitude: 51.5074, longitude: -0.1278 },
+  { name: "Paris, France", latitude: 48.8566, longitude: 2.3522 },
+  { name: "Tokyo, Japan", latitude: 35.6762, longitude: 139.6503 },
+  { name: "Sydney, Australia", latitude: -33.8688, longitude: 151.2093 },
+  { name: "Toronto, Canada", latitude: 43.6532, longitude: -79.3832 },
+  { name: "Berlin, Germany", latitude: 52.5200, longitude: 13.4050 },
+  { name: "Mumbai, India", latitude: 19.0760, longitude: 72.8777 },
+  { name: "Singapore", latitude: 1.3521, longitude: 103.8198 },
+  { name: "Dubai, UAE", latitude: 25.2048, longitude: 55.2708 },
+  { name: "Mexico City, Mexico", latitude: 19.4326, longitude: -99.1332 },
+];
+
 const WeatherWidget = () => {
   const [weeklyWeather, setWeeklyWeather] = useState<WeatherData[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [location, setLocation] = useState<LocationData>({
-    latitude: 40.7128,
-    longitude: -74.0060,
-    name: "New York, NY"
-  });
+  const [location, setLocation] = useState<LocationData>(LOCATIONS[0]);
   const [showLocationDialog, setShowLocationDialog] = useState(false);
-  const [editLocation, setEditLocation] = useState<LocationData>(location);
+  const [selectedLocationName, setSelectedLocationName] = useState(LOCATIONS[0].name);
   const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -47,14 +61,14 @@ const WeatherWidget = () => {
           .eq("id", user.id)
           .maybeSingle();
 
-        if (profile) {
+        if (profile && profile.weather_location_name) {
           const savedLocation = {
             latitude: parseFloat(profile.weather_latitude?.toString() || "40.7128"),
             longitude: parseFloat(profile.weather_longitude?.toString() || "-74.0060"),
             name: profile.weather_location_name || "New York, NY"
           };
           setLocation(savedLocation);
-          setEditLocation(savedLocation);
+          setSelectedLocationName(savedLocation.name);
         }
       }
     };
@@ -132,24 +146,27 @@ const WeatherWidget = () => {
       return;
     }
 
+    const selectedLoc = LOCATIONS.find(loc => loc.name === selectedLocationName);
+    if (!selectedLoc) return;
+
     try {
       const { error } = await supabase
         .from("profiles")
         .update({
-          weather_latitude: editLocation.latitude,
-          weather_longitude: editLocation.longitude,
-          weather_location_name: editLocation.name
+          weather_latitude: selectedLoc.latitude,
+          weather_longitude: selectedLoc.longitude,
+          weather_location_name: selectedLoc.name
         })
         .eq("id", userId);
 
       if (error) throw error;
 
-      setLocation(editLocation);
+      setLocation(selectedLoc);
       setShowLocationDialog(false);
-      toast.success("Location saved!");
+      toast.success(`Location changed to ${selectedLoc.name}`);
       
       // Refresh weather for new location
-      await refreshWeatherData(editLocation.latitude, editLocation.longitude);
+      await refreshWeatherData(selectedLoc.latitude, selectedLoc.longitude);
     } catch (error: any) {
       console.error("Error saving location:", error);
       toast.error("Failed to save location");
@@ -243,25 +260,25 @@ const WeatherWidget = () => {
               <Cloud className="w-5 h-5" />
               Weekly Weather Forecast
             </CardTitle>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => refreshWeatherData()}
-                disabled={refreshing}
-              >
-                <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
-              </Button>
-            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => refreshWeatherData()}
+              disabled={refreshing}
+            >
+              <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+            </Button>
           </div>
-          <button
+          
+          <Button
             onClick={() => setShowLocationDialog(true)}
-            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mt-1"
+            variant="outline"
+            className="w-full mt-3 justify-start"
+            size="lg"
           >
-            <MapPin className="w-3 h-3" />
-            <span>{location.name}</span>
-            <Edit2 className="w-3 h-3" />
-          </button>
+            <MapPin className="w-4 h-4 mr-2" />
+            <span className="font-medium">{location.name}</span>
+          </Button>
         </CardHeader>
         <CardContent className="space-y-4">
           {weeklyWeather.length > 0 && (
@@ -269,7 +286,7 @@ const WeatherWidget = () => {
               {/* Today's Highlight */}
               <div className="flex items-center justify-between p-4 bg-primary/5 rounded-lg">
                 <div>
-                  <p className="text-3xl font-bold">{weeklyWeather[0].temperature}°C</p>
+                  <p className="text-3xl font-bold">{Math.round(weeklyWeather[0].temperature)}°C</p>
                   <p className="text-sm text-muted-foreground">{weeklyWeather[0].condition}</p>
                 </div>
                 <div>{getWeatherIcon(weeklyWeather[0].condition)}</div>
@@ -323,91 +340,36 @@ const WeatherWidget = () => {
         </CardContent>
       </Card>
 
-      {/* Location Edit Dialog */}
+      {/* Location Selection Dialog */}
       <Dialog open={showLocationDialog} onOpenChange={setShowLocationDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Change Weather Location</DialogTitle>
             <DialogDescription>
-              Enter the coordinates and name for your location
+              Select a city to see its weather forecast
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="location-name">Location Name</Label>
-              <Input
-                id="location-name"
-                placeholder="e.g., New York, NY"
-                value={editLocation.name}
-                onChange={(e) => setEditLocation({ ...editLocation, name: e.target.value })}
-              />
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="latitude">Latitude</Label>
-                <Input
-                  id="latitude"
-                  type="number"
-                  step="0.0001"
-                  placeholder="40.7128"
-                  value={editLocation.latitude}
-                  onChange={(e) => setEditLocation({ ...editLocation, latitude: parseFloat(e.target.value) || 0 })}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="longitude">Longitude</Label>
-                <Input
-                  id="longitude"
-                  type="number"
-                  step="0.0001"
-                  placeholder="-74.0060"
-                  value={editLocation.longitude}
-                  onChange={(e) => setEditLocation({ ...editLocation, longitude: parseFloat(e.target.value) || 0 })}
-                />
-              </div>
+              <Label htmlFor="location-select">Select Location</Label>
+              <Select value={selectedLocationName} onValueChange={setSelectedLocationName}>
+                <SelectTrigger id="location-select" className="w-full">
+                  <SelectValue placeholder="Choose a city" />
+                </SelectTrigger>
+                <SelectContent className="bg-popover z-50">
+                  {LOCATIONS.map((loc) => (
+                    <SelectItem key={loc.name} value={loc.name}>
+                      {loc.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
-            <div className="p-3 bg-muted/50 rounded-lg text-sm text-muted-foreground">
-              <p className="font-medium mb-1">Popular coordinates:</p>
-              <div className="space-y-1">
-                <button 
-                  onClick={() => setEditLocation({ latitude: 40.7128, longitude: -74.0060, name: "New York, NY" })}
-                  className="block hover:text-foreground transition-colors"
-                >
-                  New York: 40.7128, -74.0060
-                </button>
-                <button 
-                  onClick={() => setEditLocation({ latitude: 51.5074, longitude: -0.1278, name: "London, UK" })}
-                  className="block hover:text-foreground transition-colors"
-                >
-                  London: 51.5074, -0.1278
-                </button>
-                <button 
-                  onClick={() => setEditLocation({ latitude: 35.6762, longitude: 139.6503, name: "Tokyo, Japan" })}
-                  className="block hover:text-foreground transition-colors"
-                >
-                  Tokyo: 35.6762, 139.6503
-                </button>
-              </div>
-            </div>
-
-            <div className="flex gap-2">
-              <Button onClick={saveLocation} className="flex-1">
-                <Check className="w-4 h-4 mr-2" />
-                Save Location
-              </Button>
-              <Button 
-                variant="outline" 
-                onClick={() => {
-                  setEditLocation(location);
-                  setShowLocationDialog(false);
-                }}
-              >
-                <X className="w-4 h-4" />
-              </Button>
-            </div>
+            <Button onClick={saveLocation} className="w-full" size="lg">
+              <MapPin className="w-4 h-4 mr-2" />
+              Change to {selectedLocationName}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
