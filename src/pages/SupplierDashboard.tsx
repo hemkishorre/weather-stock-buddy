@@ -5,10 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Loader2, LogOut, Package, ShoppingCart } from "lucide-react";
+import { Loader2, LogOut, Package, ShoppingCart, User as UserIcon } from "lucide-react";
 import { User } from "@supabase/supabase-js";
 import ProductManagement from "@/components/ProductManagement";
 import SupplierOrders from "@/components/SupplierOrders";
+import ProfileEdit from "@/components/ProfileEdit";
 
 interface Profile {
   business_name: string;
@@ -127,7 +128,7 @@ const SupplierDashboard = () => {
           </Card>
         ) : (
           <Tabs defaultValue="products" className="space-y-4">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="products">
                 <Package className="w-4 h-4 mr-2" />
                 My Products
@@ -135,6 +136,10 @@ const SupplierDashboard = () => {
               <TabsTrigger value="orders">
                 <ShoppingCart className="w-4 h-4 mr-2" />
                 Orders
+              </TabsTrigger>
+              <TabsTrigger value="profile">
+                <UserIcon className="w-4 h-4 mr-2" />
+                Profile
               </TabsTrigger>
             </TabsList>
 
@@ -144,6 +149,10 @@ const SupplierDashboard = () => {
 
             <TabsContent value="orders" className="space-y-4">
               <SupplierOrders wholesalerId={wholesaler.id} />
+            </TabsContent>
+
+            <TabsContent value="profile" className="space-y-4">
+              {user && <ProfileEdit userId={user.id} />}
             </TabsContent>
           </Tabs>
         )}

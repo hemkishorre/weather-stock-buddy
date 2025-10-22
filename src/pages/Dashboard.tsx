@@ -11,7 +11,7 @@ import WeatherWidget from "@/components/WeatherWidget";
 import WholesalerCard from "@/components/WholesalerCard";
 import ProductList from "@/components/ProductList";
 import InventoryNeedsInput from "@/components/InventoryNeedsInput";
-import AISuggestions from "@/components/AISuggestions";
+import AISuggestionsEnhanced from "@/components/AISuggestionsEnhanced";
 
 interface Wholesaler {
   id: string;
@@ -142,12 +142,13 @@ const Dashboard = () => {
     }
   };
 
-  const handleAddToCart = (productId: string, quantity: number, unitPrice: number) => {
-    if (!selectedWholesaler) return;
+  const handleAddToCart = (productId: string, quantity: number, unitPrice: number, wholesalerId?: string) => {
+    const finalWholesalerId = wholesalerId || selectedWholesaler;
+    if (!finalWholesalerId) return;
     
     setCart((prev) => ({
       ...prev,
-      [productId]: { productId, quantity, unitPrice, wholesalerId: selectedWholesaler },
+      [productId]: { productId, quantity, unitPrice, wholesalerId: finalWholesalerId },
     }));
     toast.success("Added to cart");
   };
@@ -350,7 +351,7 @@ const Dashboard = () => {
             <InventoryNeedsInput />
 
             {/* AI Suggestions */}
-            <AISuggestions />
+            <AISuggestionsEnhanced onAddToCart={handleAddToCart} />
           </TabsContent>
 
           <TabsContent value="wholesalers" className="space-y-6">

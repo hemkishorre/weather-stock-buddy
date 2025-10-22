@@ -17,18 +17,15 @@ serve(async (req) => {
       throw new Error('LOVABLE_API_KEY is not configured');
     }
 
-    // Get authorization header
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       throw new Error('No authorization header');
     }
 
-    // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Get user from auth header
     const token = authHeader.replace('Bearer ', '');
     const { data: { user }, error: userError } = await supabase.auth.getUser(token);
     
@@ -61,9 +58,9 @@ serve(async (req) => {
     const longitude = profile?.weather_longitude || -74.0060;
     const locationName = profile?.weather_location_name || 'New York, NY';
 
-    // Fetch weather data
+    // Fetch weather data for the next 7 days
     const today = new Date();
-    const threeDays = Array.from({ length: 3 }, (_, i) => {
+    const sevenDays = Array.from({ length: 7 }, (_, i) => {
       const date = new Date(today);
       date.setDate(today.getDate() + i);
       return date.toISOString().split('T')[0];
@@ -74,8 +71,24 @@ serve(async (req) => {
       .from('weather_cache')
       .select('*')
       .eq('location', locationKey)
-      .in('forecast_date', threeDays)
+      .in('forecast_date', sevenDays)
       .order('forecast_date', { ascending: true });
+
+    // Fetch all available products from all wholesalers
+    const { data: allProducts } = await supabase
+      .from('products')
+      .select(`
+        id,
+        name,
+        category,
+        unit,
+        price_per_unit,
+        stock_quantity,
+        wholesaler_id,
+        wholesalers (
+          name
+        )
+      `);
 
     // Prepare context for AI
     const inventoryContext = inventoryNeeds && inventoryNeeds.length > 0
@@ -90,43 +103,49 @@ serve(async (req) => {
         ).join('\n')
       : 'No weather data available.';
 
-    const systemPrompt = `You are an intelligent supply chain assistant for food vendors. Your role is to analyze the vendor's inventory needs alongside weather forecasts to provide actionable, smart recommendations.
+    const systemPrompt = `You are an intelligent supply chain assistant for food vendors. Your role is to analyze the vendor's inventory needs alongside a 7-day weather forecast to provide actionable, smart recommendations with specific quantities.
 
 Location: ${locationName}
 
 Current Inventory Needs:
 ${inventoryContext}
 
-Weather Forecast (Next 3 Days):
+Weather Forecast (Next 7 Days):
 ${weatherContext}
 
+Available Product Categories: ${allProducts ? [...new Set(allProducts.map((p: any) => p.category))].join(', ') : 'Various'}
+
 Provide 3-5 specific, actionable recommendations considering:
-1. How weather conditions affect demand for specific items
+1. How weather conditions affect demand for specific items over the week
 2. Priority levels of inventory needs
-3. Seasonal patterns and temperature impacts
-4. Practical adjustments to quantities based on weather
+3. Temperature impacts and patterns across multiple days
+4. Practical quantity adjustments based on weekly weather trends
+5. Suggest realistic quantities to purchase (e.g., "15 kg", "20 units")
 
 Format your response as a JSON array of suggestions, each with:
 - "item": the inventory item or category
 - "recommendation": specific action to take
-- "reason": why this is recommended based on weather/demand
+- "reason": why this is recommended based on weather/demand patterns
 - "priority": "high", "medium", or "low"
+- "suggested_quantity": numeric value (e.g., 15, 20, 30)
+- "unit": measurement unit (e.g., "kg", "units", "boxes")
 
 Example format:
 [
   {
     "item": "Fresh Vegetables",
-    "recommendation": "Increase tomato order by 20% (add 2kg to your planned 10kg)",
-    "reason": "Sunny weather increases demand for fresh salads and cold dishes",
-    "priority": "high"
+    "recommendation": "Increase tomato order to 25 kg total",
+    "reason": "Sunny weather for 5 days increases demand for fresh salads and cold dishes",
+    "priority": "high",
+    "suggested_quantity": 25,
+    "unit": "kg"
   }
 ]
 
-If no inventory items are specified, provide general recommendations for a food vendor based on the weather.`;
+If no inventory items are specified, provide general recommendations for a food vendor based on the weather patterns.`;
 
     console.log('Calling AI with context...');
 
-    // Call Lovable AI
     const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -137,7 +156,7 @@ If no inventory items are specified, provide general recommendations for a food 
         model: 'google/gemini-2.5-flash',
         messages: [
           { role: 'system', content: systemPrompt },
-          { role: 'user', content: 'Based on my inventory needs and the weather forecast, what are your smart recommendations?' }
+          { role: 'user', content: 'Based on my inventory needs and the 7-day weather forecast, what are your smart recommendations with specific quantities to buy?' }
         ],
         temperature: 0.7,
       }),
@@ -154,22 +173,48 @@ If no inventory items are specified, provide general recommendations for a food 
     
     console.log('AI response received:', aiContent);
 
-    // Parse AI response as JSON
     let suggestions;
     try {
-      // Extract JSON from markdown code blocks if present
       const jsonMatch = aiContent.match(/```json\n?([\s\S]*?)\n?```/) || 
                        aiContent.match(/\[[\s\S]*\]/);
       const jsonStr = jsonMatch ? (jsonMatch[1] || jsonMatch[0]) : aiContent;
       suggestions = JSON.parse(jsonStr);
+
+      // Match suggestions with actual products
+      suggestions = suggestions.map((suggestion: any) => {
+        const matchingProducts = allProducts?.filter((product: any) => {
+          const productName = product.name.toLowerCase();
+          const suggestionItem = suggestion.item.toLowerCase();
+          const category = product.category.toLowerCase();
+          
+          return productName.includes(suggestionItem) || 
+                 suggestionItem.includes(productName) ||
+                 category.includes(suggestionItem) ||
+                 suggestionItem.includes(category);
+        }).map((product: any) => ({
+          id: product.id,
+          name: product.name,
+          price_per_unit: product.price_per_unit,
+          wholesaler_id: product.wholesaler_id,
+          wholesaler_name: product.wholesalers?.name || 'Unknown Supplier',
+          stock_quantity: product.stock_quantity
+        })) || [];
+
+        return {
+          ...suggestion,
+          matching_products: matchingProducts.slice(0, 3) // Limit to top 3 matches
+        };
+      });
     } catch (parseError) {
       console.error('Failed to parse AI response as JSON:', parseError);
-      // Fallback: return raw content
       suggestions = [{
         item: "General Recommendation",
         recommendation: aiContent,
         reason: "AI analysis based on current conditions",
-        priority: "medium"
+        priority: "medium",
+        suggested_quantity: 0,
+        unit: "units",
+        matching_products: []
       }];
     }
 

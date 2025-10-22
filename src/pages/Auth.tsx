@@ -14,6 +14,8 @@ const authSchema = z.object({
   password: z.string().min(6, { message: "Password must be at least 6 characters" }),
   businessName: z.string().min(2, { message: "Business name must be at least 2 characters" }).optional(),
   role: z.enum(["vendor", "supplier"]).optional(),
+  phone: z.string().min(10, { message: "Phone number must be at least 10 characters" }).optional(),
+  location: z.string().min(3, { message: "Location must be at least 3 characters" }).optional(),
 });
 
 const Auth = () => {
@@ -21,6 +23,8 @@ const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [businessName, setBusinessName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [location, setLocation] = useState("");
   const [role, setRole] = useState<"vendor" | "supplier">("vendor");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -46,6 +50,8 @@ const Auth = () => {
         password,
         businessName: isLogin ? undefined : businessName,
         role: isLogin ? undefined : role,
+        phone: isLogin ? undefined : phone,
+        location: isLogin ? undefined : location,
       });
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -99,6 +105,8 @@ const Auth = () => {
             data: {
               business_name: businessName,
               role: role,
+              contact_phone: phone,
+              location: location,
             },
           },
         });
@@ -197,6 +205,32 @@ const Auth = () => {
                     disabled={loading}
                   />
                 </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Phone Number</Label>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    placeholder="+1 234 567 8900"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    required={!isLogin}
+                    disabled={loading}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="location">Address</Label>
+                  <Input
+                    id="location"
+                    type="text"
+                    placeholder="City, State"
+                    value={location}
+                    onChange={(e) => setLocation(e.target.value)}
+                    required={!isLogin}
+                    disabled={loading}
+                  />
+                </div>
               </>
             )}
             
@@ -249,6 +283,8 @@ const Auth = () => {
                 onClick={() => {
                   setIsLogin(!isLogin);
                   setBusinessName("");
+                  setPhone("");
+                  setLocation("");
                   setRole("vendor");
                 }}
                 className="text-primary hover:underline"
