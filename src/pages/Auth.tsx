@@ -13,7 +13,7 @@ const authSchema = z.object({
   email: z.string().email({ message: "Invalid email address" }),
   password: z.string().min(6, { message: "Password must be at least 6 characters" }),
   businessName: z.string().min(2, { message: "Business name must be at least 2 characters" }).optional(),
-  accountType: z.enum(["vendor", "supplier"]).optional(),
+  role: z.enum(["vendor", "supplier"]).optional(),
 });
 
 const Auth = () => {
@@ -21,7 +21,7 @@ const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [businessName, setBusinessName] = useState("");
-  const [accountType, setAccountType] = useState<"vendor" | "supplier">("vendor");
+  const [role, setRole] = useState<"vendor" | "supplier">("vendor");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -45,7 +45,7 @@ const Auth = () => {
         email,
         password,
         businessName: isLogin ? undefined : businessName,
-        accountType: isLogin ? undefined : accountType,
+        role: isLogin ? undefined : role,
       });
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -86,7 +86,7 @@ const Auth = () => {
             emailRedirectTo: redirectUrl,
             data: {
               business_name: businessName,
-              role: accountType,
+              role: role,
             },
           },
         });
@@ -138,27 +138,27 @@ const Auth = () => {
             {!isLogin && (
               <>
                 <div className="space-y-2">
-                  <Label htmlFor="accountType">Account Type</Label>
+                  <Label htmlFor="role">Account Type</Label>
                   <div className="flex gap-4">
-                    <label className="flex items-center gap-2 cursor-pointer">
+                    <label className="flex items-center space-x-2 cursor-pointer">
                       <input
                         type="radio"
-                        name="accountType"
+                        name="role"
                         value="vendor"
-                        checked={accountType === "vendor"}
-                        onChange={(e) => setAccountType(e.target.value as "vendor" | "supplier")}
+                        checked={role === "vendor"}
+                        onChange={(e) => setRole(e.target.value as "vendor" | "supplier")}
                         disabled={loading}
                         className="w-4 h-4 text-primary focus:ring-primary"
                       />
                       <span className="text-sm font-medium">Vendor</span>
                     </label>
-                    <label className="flex items-center gap-2 cursor-pointer">
+                    <label className="flex items-center space-x-2 cursor-pointer">
                       <input
                         type="radio"
-                        name="accountType"
+                        name="role"
                         value="supplier"
-                        checked={accountType === "supplier"}
-                        onChange={(e) => setAccountType(e.target.value as "vendor" | "supplier")}
+                        checked={role === "supplier"}
+                        onChange={(e) => setRole(e.target.value as "vendor" | "supplier")}
                         disabled={loading}
                         className="w-4 h-4 text-primary focus:ring-primary"
                       />
@@ -166,7 +166,7 @@ const Auth = () => {
                     </label>
                   </div>
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label htmlFor="businessName">Business Name</Label>
                   <Input
@@ -231,7 +231,7 @@ const Auth = () => {
                 onClick={() => {
                   setIsLogin(!isLogin);
                   setBusinessName("");
-                  setAccountType("vendor");
+                  setRole("vendor");
                 }}
                 className="text-primary hover:underline"
                 disabled={loading}
