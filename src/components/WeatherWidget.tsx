@@ -326,11 +326,7 @@ const WeatherWidget = () => {
               </div>
 
               {/* Forecast Grid - Dynamic based on selected period */}
-              <div className={`grid gap-2 mt-4 ${
-                forecastDays <= 7 ? 'grid-cols-7' : 
-                forecastDays <= 14 ? 'grid-cols-7' : 
-                'grid-cols-6'
-              }`}>
+              <div className="grid gap-2 mt-4 grid-cols-7">
                 {weeklyWeather.map((day, index) => (
                   <div 
                     key={day.forecast_date}
