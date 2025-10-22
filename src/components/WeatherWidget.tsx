@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { LocationSearch } from "@/components/LocationSearch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -34,7 +34,6 @@ const WeatherWidget = () => {
   const [showLocationDialog, setShowLocationDialog] = useState(false);
   const [selectedLocationName, setSelectedLocationName] = useState("New York, NY");
   const [userId, setUserId] = useState<string | null>(null);
-  const [forecastDays, setForecastDays] = useState<number>(7);
 
   useEffect(() => {
     const initUser = async () => {
@@ -64,10 +63,10 @@ const WeatherWidget = () => {
     initUser();
   }, []);
 
-  const fetchWeatherFromCache = async (lat: number, lon: number, days: number = forecastDays) => {
+  const fetchWeatherFromCache = async (lat: number, lon: number) => {
     try {
       const today = new Date();
-      const dates = Array.from({ length: days }, (_, i) => {
+      const dates = Array.from({ length: 7 }, (_, i) => {
         const date = new Date(today);
         date.setDate(today.getDate() + i);
         return date.toISOString().split('T')[0];
@@ -98,10 +97,9 @@ const WeatherWidget = () => {
     }
   };
 
-  const refreshWeatherData = async (lat?: number, lon?: number, days?: number) => {
+  const refreshWeatherData = async (lat?: number, lon?: number) => {
     const latitude = lat || location.latitude;
     const longitude = lon || location.longitude;
-    const forecastLength = days || forecastDays;
     
     setRefreshing(true);
     try {
@@ -112,7 +110,7 @@ const WeatherWidget = () => {
           latitude,
           longitude,
           location: locationKey,
-          days: forecastLength
+          days: 7
         }
       });
 
@@ -120,7 +118,7 @@ const WeatherWidget = () => {
 
       if (data?.success) {
         toast.success("Weather data updated!");
-        await fetchWeatherFromCache(latitude, longitude, forecastLength);
+        await fetchWeatherFromCache(latitude, longitude);
       }
     } catch (error: any) {
       console.error("Error refreshing weather:", error);
@@ -174,8 +172,8 @@ const WeatherWidget = () => {
       setShowLocationDialog(false);
       toast.success(`Location changed to ${selectedLoc.name}`);
       
-      // Refresh weather for new location with current forecast period
-      await refreshWeatherData(selectedLoc.latitude, selectedLoc.longitude, forecastDays);
+      // Refresh weather for new location
+      await refreshWeatherData(selectedLoc.latitude, selectedLoc.longitude);
     } catch (error: any) {
       console.error("Error saving location:", error);
       toast.error("Failed to save location");
@@ -187,18 +185,17 @@ const WeatherWidget = () => {
       if (!location.latitude || !location.longitude) return;
       
       setLoading(true);
-      const hasCache = await fetchWeatherFromCache(location.latitude, location.longitude, forecastDays);
+      const hasCache = await fetchWeatherFromCache(location.latitude, location.longitude);
       
-      // If we don't have enough cached data for the selected period, fetch more
-      if (!hasCache || weeklyWeather.length < forecastDays) {
-        await refreshWeatherData(location.latitude, location.longitude, forecastDays);
+      if (!hasCache) {
+        await refreshWeatherData(location.latitude, location.longitude);
       }
       
       setLoading(false);
     };
 
     initWeather();
-  }, [location, forecastDays]);
+  }, [location]);
 
   const getWeatherIcon = (condition: string) => {
     const conditionLower = condition.toLowerCase();
@@ -273,29 +270,16 @@ const WeatherWidget = () => {
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <Cloud className="w-5 h-5" />
-              Weather Forecast
+              Weekly Weather Forecast
             </CardTitle>
-            <div className="flex items-center gap-2">
-              <Select value={forecastDays.toString()} onValueChange={(value) => setForecastDays(parseInt(value))}>
-                <SelectTrigger className="w-[130px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="7">1 Week</SelectItem>
-                  <SelectItem value="14">2 Weeks</SelectItem>
-                  <SelectItem value="21">3 Weeks</SelectItem>
-                  <SelectItem value="30">1 Month</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => refreshWeatherData()}
-                disabled={refreshing}
-              >
-                <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
-              </Button>
-            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => refreshWeatherData()}
+              disabled={refreshing}
+            >
+              <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+            </Button>
           </div>
           
           <Button
