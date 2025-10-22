@@ -309,7 +309,7 @@ const Dashboard = () => {
                 <CardContent>
                   <div className="text-2xl font-bold">{cartItemCount}</div>
                   <p className="text-xs text-muted-foreground">
-                    ${cartTotal.toFixed(2)} total
+                    ₹{cartTotal.toFixed(2)} total
                   </p>
                 </CardContent>
               </Card>
@@ -413,7 +413,7 @@ const Dashboard = () => {
                           </p>
                         </div>
                         <div className="text-right">
-                          <p className="font-semibold">${order.total_amount.toFixed(2)}</p>
+                          <p className="font-semibold">₹{order.total_amount.toFixed(2)}</p>
                           <p className="text-sm text-muted-foreground capitalize">
                             {order.status}
                           </p>

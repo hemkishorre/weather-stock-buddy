@@ -308,7 +308,7 @@ const ProductManagement = ({ wholesalerId }: ProductManagementProps) => {
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">Price:</span>
                           <span className="font-semibold">
-                            ${product.price_per_unit.toFixed(2)}/{product.unit}
+                            ₹{product.price_per_unit.toFixed(2)}/{product.unit}
                           </span>
                         </div>
                         <div className="flex justify-between">

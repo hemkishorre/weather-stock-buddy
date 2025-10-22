@@ -116,7 +116,7 @@ const ProductList = ({ wholesalerId, onAddToCart }: ProductListProps) => {
                 <CardContent className="space-y-3">
                   <div className="flex justify-between items-center">
                     <span className="text-2xl font-bold text-primary">
-                      ${product.price_per_unit}
+                      ₹{product.price_per_unit}
                     </span>
                     <span className="text-sm text-muted-foreground">per {product.unit}</span>
                   </div>

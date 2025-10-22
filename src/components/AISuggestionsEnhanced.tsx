@@ -218,7 +218,7 @@ const AISuggestionsEnhanced = ({ onAddToCart, onSuggestionsChange }: AISuggestio
                           <div className="flex-1">
                             <p className="text-sm font-medium">{product.wholesaler_name}</p>
                             <p className="text-xs text-muted-foreground">
-                              ${product.price_per_unit}/{suggestion.unit} • Stock: {product.stock_quantity}
+                              ₹{product.price_per_unit}/{suggestion.unit} • Stock: {product.stock_quantity}
                             </p>
                           </div>
                           <Button

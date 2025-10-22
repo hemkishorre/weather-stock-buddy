@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingDown, TrendingUp, DollarSign, Target, Shield, AlertTriangle } from "lucide-react";
+import { TrendingDown, TrendingUp, IndianRupee, Target, Shield, AlertTriangle } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -128,12 +128,18 @@ export const InventoryAnalytics = ({ aiSuggestions }: InventoryAnalyticsProps) =
   const totalPotentialSpoilagePrevented = riskMetrics.reduce((sum, m) => sum + (m?.potentialLoss || 0), 0);
   const highRiskItemsProtected = riskMetrics.filter(m => m && m.spoilageRisk === 'high').length;
 
-  // Pie chart data for risk distribution
-  const riskDistribution = [
-    { name: 'High Risk', value: riskMetrics.filter(m => m?.spoilageRisk === 'high').length, color: 'hsl(var(--destructive))' },
-    { name: 'Medium Risk', value: riskMetrics.filter(m => m?.spoilageRisk === 'medium').length, color: 'hsl(var(--warning))' },
-    { name: 'Low Risk', value: riskMetrics.filter(m => m?.spoilageRisk === 'low').length, color: 'hsl(var(--success))' }
-  ].filter(d => d.value > 0);
+  // Pie chart data - show individual items at risk
+  const riskDistribution = riskMetrics
+    .filter(m => m && m.quantityReduced > 0)
+    .map(m => ({
+      name: m!.item,
+      value: m!.potentialLoss,
+      color: m!.spoilageRisk === 'high' 
+        ? 'hsl(var(--destructive))' 
+        : m!.spoilageRisk === 'medium' 
+        ? 'hsl(var(--warning))' 
+        : 'hsl(var(--success))'
+    }));
 
   return (
     <Card className="shadow-card">
@@ -151,9 +157,9 @@ export const InventoryAnalytics = ({ aiSuggestions }: InventoryAnalyticsProps) =
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Original Plan Cost</p>
-                  <p className="text-2xl font-bold">${originalCost.toFixed(2)}</p>
+                  <p className="text-2xl font-bold">₹{originalCost.toFixed(2)}</p>
                 </div>
-                <DollarSign className="w-8 h-8 text-muted-foreground" />
+                <IndianRupee className="w-8 h-8 text-muted-foreground" />
               </div>
             </CardContent>
           </Card>
@@ -163,9 +169,9 @@ export const InventoryAnalytics = ({ aiSuggestions }: InventoryAnalyticsProps) =
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">AI Suggested Cost</p>
-                  <p className="text-2xl font-bold">${aiSuggestedCost.toFixed(2)}</p>
+                  <p className="text-2xl font-bold">₹{aiSuggestedCost.toFixed(2)}</p>
                 </div>
-                <DollarSign className="w-8 h-8 text-primary" />
+                <IndianRupee className="w-8 h-8 text-primary" />
               </div>
             </CardContent>
           </Card>
@@ -178,7 +184,7 @@ export const InventoryAnalytics = ({ aiSuggestions }: InventoryAnalyticsProps) =
                     {isAISavingMoney ? "Potential Savings" : "Additional Cost"}
                   </p>
                   <p className="text-2xl font-bold">
-                    ${Math.abs(difference).toFixed(2)}
+                    ₹{Math.abs(difference).toFixed(2)}
                   </p>
                   <p className="text-sm font-medium mt-1">
                     {Math.abs(percentageChange).toFixed(1)}% {isAISavingMoney ? "savings" : "increase"}
@@ -202,7 +208,7 @@ export const InventoryAnalytics = ({ aiSuggestions }: InventoryAnalyticsProps) =
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="name" />
               <YAxis />
-              <Tooltip formatter={(value) => `$${Number(value).toFixed(2)}`} />
+              <Tooltip formatter={(value) => `₹${Number(value).toFixed(2)}`} />
               <Legend />
               <Bar dataKey="original" fill="hsl(var(--muted-foreground))" name="Original Plan" />
               <Bar dataKey="aiSuggested" fill="hsl(var(--primary))" name="AI Suggested" />
@@ -230,7 +236,7 @@ export const InventoryAnalytics = ({ aiSuggestions }: InventoryAnalyticsProps) =
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Spoilage Prevention</p>
-                  <p className="text-2xl font-bold">${totalPotentialSpoilagePrevented.toFixed(2)}</p>
+                  <p className="text-2xl font-bold">₹{totalPotentialSpoilagePrevented.toFixed(2)}</p>
                   <p className="text-xs text-muted-foreground mt-1">Potential loss avoided</p>
                 </div>
                 <Shield className="w-8 h-8 text-success" />
@@ -255,7 +261,7 @@ export const InventoryAnalytics = ({ aiSuggestions }: InventoryAnalyticsProps) =
         {/* Risk Distribution Chart */}
         {riskDistribution.length > 0 && (
           <div className="mt-6">
-            <h3 className="text-sm font-semibold mb-4">Spoilage Risk Distribution</h3>
+            <h3 className="text-sm font-semibold mb-4">Items at Risk - Potential Spoilage Loss</h3>
             <div className="flex items-center justify-center">
               <ResponsiveContainer width="100%" height={250}>
                 <PieChart>
@@ -264,7 +270,7 @@ export const InventoryAnalytics = ({ aiSuggestions }: InventoryAnalyticsProps) =
                     cx="50%"
                     cy="50%"
                     labelLine={false}
-                    label={({ name, value }) => `${name}: ${value}`}
+                    label={({ name, value }) => `${name}: ₹${value.toFixed(2)}`}
                     outerRadius={80}
                     fill="#8884d8"
                     dataKey="value"
@@ -273,7 +279,7 @@ export const InventoryAnalytics = ({ aiSuggestions }: InventoryAnalyticsProps) =
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip />
+                  <Tooltip formatter={(value) => `₹${Number(value).toFixed(2)}`} />
                 </PieChart>
               </ResponsiveContainer>
             </div>
@@ -288,8 +294,8 @@ export const InventoryAnalytics = ({ aiSuggestions }: InventoryAnalyticsProps) =
             </p>
             <p className="text-sm text-muted-foreground mt-2">
               {isAISavingMoney 
-                ? `By following AI suggestions, you could save $${Math.abs(difference).toFixed(2)} (${Math.abs(percentageChange).toFixed(1)}%) on your inventory costs. The AI has optimized quantities based on weather patterns, demand forecasts, and seasonal trends.`
-                : `AI suggests investing an additional $${Math.abs(difference).toFixed(2)} (${Math.abs(percentageChange).toFixed(1)}%) to meet expected demand. This investment could prevent stockouts and maximize sales opportunities based on weather and demand forecasts.`
+                ? `By following AI suggestions, you could save ₹${Math.abs(difference).toFixed(2)} (${Math.abs(percentageChange).toFixed(1)}%) on your inventory costs. The AI has optimized quantities based on weather patterns, demand forecasts, and seasonal trends.`
+                : `AI suggests investing an additional ₹${Math.abs(difference).toFixed(2)} (${Math.abs(percentageChange).toFixed(1)}%) to meet expected demand. This investment could prevent stockouts and maximize sales opportunities based on weather and demand forecasts.`
               }
             </p>
           </div>
@@ -300,7 +306,7 @@ export const InventoryAnalytics = ({ aiSuggestions }: InventoryAnalyticsProps) =
               Risk Protection Summary
             </p>
             <p className="text-sm text-muted-foreground mt-2">
-              AI predictions protect you from ${totalPotentialSpoilagePrevented.toFixed(2)} in potential spoilage losses by optimizing {totalItemsOptimized} items. 
+              AI predictions protect you from ₹{totalPotentialSpoilagePrevented.toFixed(2)} in potential spoilage losses by optimizing {totalItemsOptimized} items. 
               {highRiskItemsProtected > 0 && ` Special attention given to ${highRiskItemsProtected} high-risk item(s) affected by weather conditions.`}
               {' '}The recommendations account for shelf life, humidity, temperature, and precipitation forecasts to minimize waste and maximize freshness.
             </p>

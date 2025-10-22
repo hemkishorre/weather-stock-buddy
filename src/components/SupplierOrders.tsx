@@ -184,7 +184,7 @@ const SupplierOrders = ({ wholesalerId }: SupplierOrdersProps) => {
                             {item.products.name} × {item.quantity} {item.products.unit}
                           </span>
                           <span className="font-semibold">
-                            ${item.subtotal.toFixed(2)}
+                            ₹{item.subtotal.toFixed(2)}
                           </span>
                         </div>
                       ))}
@@ -194,7 +194,7 @@ const SupplierOrders = ({ wholesalerId }: SupplierOrdersProps) => {
                   <div className="flex justify-between items-center pt-2 border-t">
                     <span className="font-semibold">Total Amount:</span>
                     <span className="text-lg font-bold text-primary">
-                      ${order.total_amount?.toFixed(2) || "0.00"}
+                      ₹{order.total_amount?.toFixed(2) || "0.00"}
                     </span>
                   </div>
 
