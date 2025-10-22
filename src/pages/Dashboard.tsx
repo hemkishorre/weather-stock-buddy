@@ -12,6 +12,7 @@ import WholesalerCard from "@/components/WholesalerCard";
 import ProductList from "@/components/ProductList";
 import InventoryNeedsInput from "@/components/InventoryNeedsInput";
 import AISuggestionsEnhanced from "@/components/AISuggestionsEnhanced";
+import { InventoryAnalytics } from "@/components/InventoryAnalytics";
 
 interface Wholesaler {
   id: string;
@@ -49,6 +50,7 @@ const Dashboard = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [placingOrder, setPlacingOrder] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
+  const [aiSuggestions, setAiSuggestions] = useState<any[]>([]);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -353,7 +355,15 @@ const Dashboard = () => {
             <InventoryNeedsInput />
 
             {/* AI Suggestions */}
-            <AISuggestionsEnhanced onAddToCart={handleAddToCart} />
+            <AISuggestionsEnhanced 
+              onAddToCart={handleAddToCart}
+              onSuggestionsChange={setAiSuggestions}
+            />
+
+            {/* Analytics */}
+            {aiSuggestions.length > 0 && (
+              <InventoryAnalytics aiSuggestions={aiSuggestions} />
+            )}
           </TabsContent>
 
           <TabsContent value="wholesalers" className="space-y-6">

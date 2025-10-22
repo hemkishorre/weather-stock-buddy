@@ -28,9 +28,10 @@ interface SuggestionWithQuantity {
 
 interface AISuggestionsEnhancedProps {
   onAddToCart: (productId: string, quantity: number, price: number, wholesalerId: string) => void;
+  onSuggestionsChange?: (suggestions: SuggestionWithQuantity[]) => void;
 }
 
-const AISuggestionsEnhanced = ({ onAddToCart }: AISuggestionsEnhancedProps) => {
+const AISuggestionsEnhanced = ({ onAddToCart, onSuggestionsChange }: AISuggestionsEnhancedProps) => {
   const [suggestions, setSuggestions] = useState<SuggestionWithQuantity[]>([]);
   const [loading, setLoading] = useState(false);
   const [context, setContext] = useState<any>(null);
@@ -48,6 +49,7 @@ const AISuggestionsEnhanced = ({ onAddToCart }: AISuggestionsEnhancedProps) => {
       if (data?.success) {
         setSuggestions(data.suggestions);
         setContext(data.context);
+        onSuggestionsChange?.(data.suggestions);
         toast.success("AI suggestions updated!");
       }
     } catch (error: any) {
