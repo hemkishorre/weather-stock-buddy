@@ -152,6 +152,9 @@ export type Database = {
           id: string
           location: string | null
           updated_at: string
+          weather_latitude: number | null
+          weather_location_name: string | null
+          weather_longitude: number | null
         }
         Insert: {
           business_name: string
@@ -160,6 +163,9 @@ export type Database = {
           id: string
           location?: string | null
           updated_at?: string
+          weather_latitude?: number | null
+          weather_location_name?: string | null
+          weather_longitude?: number | null
         }
         Update: {
           business_name?: string
@@ -168,6 +174,9 @@ export type Database = {
           id?: string
           location?: string | null
           updated_at?: string
+          weather_latitude?: number | null
+          weather_location_name?: string | null
+          weather_longitude?: number | null
         }
         Relationships: []
       }
