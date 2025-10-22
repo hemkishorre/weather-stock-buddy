@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { LocationSearch } from "@/components/LocationSearch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Loader2, CloudRain } from "lucide-react";
@@ -221,14 +222,10 @@ const Auth = () => {
 
                 <div className="space-y-2">
                   <Label htmlFor="location">Address</Label>
-                  <Input
-                    id="location"
-                    type="text"
-                    placeholder="City, State"
+                  <LocationSearch
                     value={location}
-                    onChange={(e) => setLocation(e.target.value)}
-                    required={!isLogin}
-                    disabled={loading}
+                    onChange={setLocation}
+                    placeholder="Search for your city..."
                   />
                 </div>
               </>

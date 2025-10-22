@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { LocationSearch } from "@/components/LocationSearch";
 import { toast } from "sonner";
 import { Loader2, Save, User } from "lucide-react";
 
@@ -119,14 +120,10 @@ const ProfileEdit = ({ userId }: ProfileEditProps) => {
 
           <div className="space-y-2">
             <Label htmlFor="location">Address</Label>
-            <Input
-              id="location"
-              type="text"
-              placeholder="City, State"
+            <LocationSearch
               value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              required
-              disabled={saving}
+              onChange={setLocation}
+              placeholder="Search for your city..."
             />
           </div>
 
