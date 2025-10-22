@@ -25,6 +25,17 @@ interface CartItem {
   productId: string;
   quantity: number;
   unitPrice: number;
+  wholesalerId: string;
+}
+
+interface Order {
+  id: string;
+  status: string;
+  total_amount: number;
+  created_at: string;
+  wholesalers: {
+    name: string;
+  };
 }
 
 const Dashboard = () => {
@@ -35,6 +46,8 @@ const Dashboard = () => {
   const [selectedWholesaler, setSelectedWholesaler] = useState<string | null>(null);
   const [cart, setCart] = useState<Record<string, CartItem>>({});
   const [showProductDialog, setShowProductDialog] = useState(false);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [placingOrder, setPlacingOrder] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -79,6 +92,9 @@ const Dashboard = () => {
         setWholesalers(wholesalersData);
       }
 
+      // Fetch user orders
+      await fetchOrders(session.user.id);
+
       setLoading(false);
     };
 
@@ -106,11 +122,103 @@ const Dashboard = () => {
     setShowProductDialog(true);
   };
 
+  const fetchOrders = async (userId: string) => {
+    const { data, error } = await supabase
+      .from("orders")
+      .select(`
+        id,
+        status,
+        total_amount,
+        created_at,
+        wholesalers (
+          name
+        )
+      `)
+      .eq("vendor_id", userId)
+      .order("created_at", { ascending: false });
+
+    if (!error && data) {
+      setOrders(data as Order[]);
+    }
+  };
+
   const handleAddToCart = (productId: string, quantity: number, unitPrice: number) => {
+    if (!selectedWholesaler) return;
+    
     setCart((prev) => ({
       ...prev,
-      [productId]: { productId, quantity, unitPrice },
+      [productId]: { productId, quantity, unitPrice, wholesalerId: selectedWholesaler },
     }));
+    toast.success("Added to cart");
+  };
+
+  const handlePlaceOrder = async () => {
+    if (Object.keys(cart).length === 0) {
+      toast.error("Your cart is empty");
+      return;
+    }
+
+    if (!user) {
+      toast.error("You must be logged in to place an order");
+      return;
+    }
+
+    setPlacingOrder(true);
+
+    try {
+      // Group cart items by wholesaler
+      const itemsByWholesaler: Record<string, CartItem[]> = {};
+      Object.values(cart).forEach((item) => {
+        if (!itemsByWholesaler[item.wholesalerId]) {
+          itemsByWholesaler[item.wholesalerId] = [];
+        }
+        itemsByWholesaler[item.wholesalerId].push(item);
+      });
+
+      // Create an order for each wholesaler
+      for (const [wholesalerId, items] of Object.entries(itemsByWholesaler)) {
+        const totalAmount = items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
+
+        // Create order
+        const { data: orderData, error: orderError } = await supabase
+          .from("orders")
+          .insert({
+            vendor_id: user.id,
+            wholesaler_id: wholesalerId,
+            total_amount: totalAmount,
+            status: "pending",
+          })
+          .select()
+          .single();
+
+        if (orderError) throw orderError;
+
+        // Create order items
+        const orderItems = items.map((item) => ({
+          order_id: orderData.id,
+          product_id: item.productId,
+          quantity: item.quantity,
+          unit_price: item.unitPrice,
+          subtotal: item.quantity * item.unitPrice,
+        }));
+
+        const { error: itemsError } = await supabase
+          .from("order_items")
+          .insert(orderItems);
+
+        if (itemsError) throw itemsError;
+      }
+
+      toast.success("Order placed successfully!");
+      setCart({});
+      setShowProductDialog(false);
+      await fetchOrders(user.id);
+    } catch (error: any) {
+      console.error("Error placing order:", error);
+      toast.error("Failed to place order: " + error.message);
+    } finally {
+      setPlacingOrder(false);
+    }
   };
 
   const cartItemCount = Object.keys(cart).length;
@@ -146,10 +254,25 @@ const Dashboard = () => {
             </div>
 
             <div className="flex items-center gap-2">
+              {cartItemCount > 0 && (
+                <Button onClick={handlePlaceOrder} disabled={placingOrder}>
+                  {placingOrder ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Placing Order...
+                    </>
+                  ) : (
+                    <>
+                      <Package className="w-4 h-4 mr-2" />
+                      Place Order ({cartItemCount})
+                    </>
+                  )}
+                </Button>
+              )}
               <Button variant="ghost" size="icon" className="relative">
                 <Bell className="w-5 h-5" />
                 <span className="absolute -top-1 -right-1 w-4 h-4 bg-warning rounded-full text-xs flex items-center justify-center text-white">
-                  2
+                  {cartItemCount}
                 </span>
               </Button>
               <Button variant="ghost" size="icon" onClick={handleLogout}>
@@ -259,9 +382,33 @@ const Dashboard = () => {
                 <CardDescription>View your past and pending orders</CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-center text-muted-foreground py-12">
-                  No orders yet. Start ordering from wholesalers to see your history here.
-                </p>
+                {orders.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-12">
+                    No orders yet. Start ordering from suppliers to see your history here.
+                  </p>
+                ) : (
+                  <div className="space-y-4">
+                    {orders.map((order) => (
+                      <div
+                        key={order.id}
+                        className="flex items-center justify-between p-4 border rounded-lg"
+                      >
+                        <div>
+                          <p className="font-semibold">{order.wholesalers.name}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {new Date(order.created_at).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-semibold">${order.total_amount.toFixed(2)}</p>
+                          <p className="text-sm text-muted-foreground capitalize">
+                            {order.status}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
