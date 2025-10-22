@@ -16,12 +16,29 @@ interface LocationSearchProps {
   placeholder?: string;
 }
 
+const POPULAR_CITIES = [
+  { name: "Chennai, Tamil Nadu, India", lat: "13.0827", lon: "80.2707" },
+  { name: "Bangalore, Karnataka, India", lat: "12.9716", lon: "77.5946" },
+  { name: "Mumbai, Maharashtra, India", lat: "19.0760", lon: "72.8777" },
+  { name: "Delhi, India", lat: "28.7041", lon: "77.1025" },
+  { name: "Kolkata, West Bengal, India", lat: "22.5726", lon: "88.3639" },
+];
+
 export function LocationSearch({ value, onChange, placeholder = "Search for a city..." }: LocationSearchProps) {
   const [searchQuery, setSearchQuery] = useState(value);
   const [locations, setLocations] = useState<LocationResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
+
+  // Show popular cities on focus if empty
+  const handleFocus = () => {
+    if (searchQuery.length < 2) {
+      setShowDropdown(true);
+    } else if (searchQuery.length >= 2 && locations.length > 0) {
+      setShowDropdown(true);
+    }
+  };
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -80,6 +97,12 @@ export function LocationSearch({ value, onChange, placeholder = "Search for a ci
     setShowDropdown(false);
   };
 
+  const handleSelectPopularCity = (cityName: string) => {
+    setSearchQuery(cityName);
+    onChange(cityName);
+    setShowDropdown(false);
+  };
+
   return (
     <div ref={wrapperRef} className="relative w-full">
       <div className="relative">
@@ -89,7 +112,7 @@ export function LocationSearch({ value, onChange, placeholder = "Search for a ci
           placeholder={placeholder}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          onFocus={() => searchQuery.length >= 2 && setShowDropdown(true)}
+          onFocus={handleFocus}
           className="pl-9 pr-9"
         />
         {loading && (
@@ -99,7 +122,24 @@ export function LocationSearch({ value, onChange, placeholder = "Search for a ci
 
       {showDropdown && (
         <div className="absolute z-50 w-full mt-1 bg-popover border border-border rounded-md shadow-lg max-h-60 overflow-auto">
-          {locations.length === 0 ? (
+          {searchQuery.length < 2 ? (
+            <div className="py-1">
+              <div className="px-3 py-2 text-xs font-semibold text-muted-foreground">
+                Popular Cities
+              </div>
+              {POPULAR_CITIES.map((city, index) => (
+                <button
+                  key={index}
+                  type="button"
+                  onClick={() => handleSelectPopularCity(city.name)}
+                  className="w-full text-left px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer flex items-center gap-2"
+                >
+                  <MapPin className="h-4 w-4 text-muted-foreground shrink-0" />
+                  <span className="truncate">{city.name}</span>
+                </button>
+              ))}
+            </div>
+          ) : locations.length === 0 ? (
             <div className="p-3 text-sm text-muted-foreground text-center">
               {loading ? "Searching..." : "No locations found"}
             </div>
