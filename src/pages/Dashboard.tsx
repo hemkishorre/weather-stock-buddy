@@ -13,6 +13,7 @@ import ProductList from "@/components/ProductList";
 import InventoryNeedsInput from "@/components/InventoryNeedsInput";
 import AISuggestionsEnhanced from "@/components/AISuggestionsEnhanced";
 import { InventoryAnalytics } from "@/components/InventoryAnalytics";
+import ProfileEdit from "@/components/ProfileEdit";
 
 interface Wholesaler {
   id: string;
@@ -295,6 +296,7 @@ const Dashboard = () => {
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="wholesalers">Find Suppliers</TabsTrigger>
             <TabsTrigger value="orders">My Orders</TabsTrigger>
+            <TabsTrigger value="profile">Profile</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
@@ -424,6 +426,10 @@ const Dashboard = () => {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="profile">
+            {user && <ProfileEdit userId={user.id} />}
           </TabsContent>
         </Tabs>
       </main>
