@@ -10,7 +10,18 @@ const Index = () => {
       const { data: { session } } = await supabase.auth.getSession();
       
       if (session) {
-        navigate("/dashboard");
+        // Check user role
+        const { data: roleData } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", session.user.id)
+          .single();
+
+        if (roleData?.role === "supplier") {
+          navigate("/supplier-dashboard");
+        } else {
+          navigate("/dashboard");
+        }
       } else {
         navigate("/auth");
       }

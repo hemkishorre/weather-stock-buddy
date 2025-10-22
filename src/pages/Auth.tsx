@@ -73,8 +73,20 @@ const Auth = () => {
         }
 
         if (data.session) {
+          // Check user role to redirect appropriately
+          const { data: roleData } = await supabase
+            .from("user_roles")
+            .select("role")
+            .eq("user_id", data.session.user.id)
+            .single();
+
           toast.success("Welcome back!");
-          navigate("/");
+          
+          if (roleData?.role === "supplier") {
+            navigate("/supplier-dashboard");
+          } else {
+            navigate("/dashboard");
+          }
         }
       } else {
         const redirectUrl = `${window.location.origin}/`;
@@ -102,7 +114,13 @@ const Auth = () => {
 
         if (data.session) {
           toast.success("Account created! Welcome!");
-          navigate("/");
+          
+          // Redirect based on role
+          if (role === "supplier") {
+            navigate("/supplier-dashboard");
+          } else {
+            navigate("/dashboard");
+          }
         } else {
           toast.success("Account created! You can now log in.");
           setIsLogin(true);

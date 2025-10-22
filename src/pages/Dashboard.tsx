@@ -46,6 +46,18 @@ const Dashboard = () => {
         return;
       }
 
+      // Check if user is a supplier and redirect to supplier dashboard
+      const { data: roleData } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", session.user.id)
+        .single();
+
+      if (roleData?.role === "supplier") {
+        navigate("/supplier-dashboard");
+        return;
+      }
+
       setUser(session.user);
 
       // Fetch user profile
