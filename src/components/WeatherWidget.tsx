@@ -222,6 +222,11 @@ const WeatherWidget = () => {
     return date.toLocaleDateString('en-US', { weekday: 'short' });
   };
 
+  const getFormattedDate = (dateString: string) => {
+    const date = new Date(dateString + 'T00:00:00');
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  };
+
   const getWeatherImpact = () => {
     if (weeklyWeather.length === 0) return "Loading forecast...";
     
@@ -302,24 +307,47 @@ const WeatherWidget = () => {
                 <span>Humidity: {weeklyWeather[0].humidity}%</span>
               </div>
 
-              {/* Weekly Forecast Grid */}
+              {/* Weekly Forecast Grid - Ensures 7 items are always displayed */}
               <div className="grid grid-cols-7 gap-2 mt-4">
-                {weeklyWeather.map((day, index) => (
-                  <div 
-                    key={day.forecast_date}
-                    className={`flex flex-col items-center p-2 rounded-lg transition-base ${
-                      index === 0 ? 'bg-primary/10' : 'bg-muted/50 hover:bg-muted'
-                    }`}
-                  >
-                    <p className="text-xs font-medium mb-1">
-                      {getDayName(day.forecast_date)}
-                    </p>
-                    <div className="my-1">
-                      {getWeatherIcon(day.condition)}
-                    </div>
-                    <p className="text-sm font-bold">{Math.round(day.temperature)}°</p>
-                  </div>
-                ))}
+                {Array.from({ length: 7 }).map((_, index) => {
+                  const day = weeklyWeather[index];
+                  if (day) {
+                    return (
+                      <div 
+                        key={day.forecast_date}
+                        className={`flex flex-col items-center p-3 rounded-lg transition-base ${
+                          index === 0 ? 'bg-primary/10' : 'bg-muted/50 hover:bg-muted'
+                        }`}
+                      >
+                        <p className="text-xs font-semibold mb-0.5">
+                          {getDayName(day.forecast_date)}
+                        </p>
+                        <p className="text-xs text-muted-foreground mb-1">
+                          {getFormattedDate(day.forecast_date)}
+                        </p>
+                        <div className="my-1">
+                          {getWeatherIcon(day.condition)}
+                        </div>
+                        <p className="text-sm font-bold">{Math.round(day.temperature)}°</p>
+                        <p className="text-xs text-muted-foreground">{day.humidity}%</p>
+                      </div>
+                    );
+                  } else {
+                    // Placeholder for missing days
+                    return (
+                      <div 
+                        key={`placeholder-${index}`}
+                        className="flex flex-col items-center p-3 rounded-lg bg-muted/30"
+                      >
+                        <p className="text-xs font-semibold mb-0.5 text-muted-foreground">--</p>
+                        <p className="text-xs text-muted-foreground mb-1">--</p>
+                        <div className="my-1 w-6 h-6 rounded-full bg-muted"></div>
+                        <p className="text-sm font-bold text-muted-foreground">--</p>
+                        <p className="text-xs text-muted-foreground">--</p>
+                      </div>
+                    );
+                  }
+                })}
               </div>
 
               {/* AI Suggestion */}

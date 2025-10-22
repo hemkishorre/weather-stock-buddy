@@ -48,6 +48,7 @@ const Dashboard = () => {
   const [showProductDialog, setShowProductDialog] = useState(false);
   const [orders, setOrders] = useState<Order[]>([]);
   const [placingOrder, setPlacingOrder] = useState(false);
+  const [activeTab, setActiveTab] = useState("overview");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -287,7 +288,7 @@ const Dashboard = () => {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
-        <Tabs defaultValue="overview" className="space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList>
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="wholesalers">Find Suppliers</TabsTrigger>
@@ -336,7 +337,7 @@ const Dashboard = () => {
                     variant="default"
                     size="sm"
                     className="w-full"
-                    onClick={() => document.querySelector('[value="wholesalers"]')?.dispatchEvent(new MouseEvent('click', { bubbles: true }))}
+                    onClick={() => setActiveTab("wholesalers")}
                   >
                     <Package className="w-4 h-4 mr-2" />
                     Browse Products
