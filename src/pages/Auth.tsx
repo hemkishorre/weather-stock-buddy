@@ -13,6 +13,7 @@ const authSchema = z.object({
   email: z.string().email({ message: "Invalid email address" }),
   password: z.string().min(6, { message: "Password must be at least 6 characters" }),
   businessName: z.string().min(2, { message: "Business name must be at least 2 characters" }).optional(),
+  role: z.enum(["supplier", "vendor"], { message: "Please select an account type" }).optional(),
 });
 
 const Auth = () => {
@@ -20,6 +21,7 @@ const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [businessName, setBusinessName] = useState("");
+  const [role, setRole] = useState<"supplier" | "vendor">("vendor");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -43,6 +45,7 @@ const Auth = () => {
         email,
         password,
         businessName: isLogin ? undefined : businessName,
+        role: isLogin ? undefined : role,
       });
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -83,6 +86,7 @@ const Auth = () => {
             emailRedirectTo: redirectUrl,
             data: {
               business_name: businessName,
+              role: role,
             },
           },
         });
@@ -132,18 +136,50 @@ const Auth = () => {
         <CardContent>
           <form onSubmit={handleAuth} className="space-y-4">
             {!isLogin && (
-              <div className="space-y-2">
-                <Label htmlFor="businessName">Business Name</Label>
-                <Input
-                  id="businessName"
-                  type="text"
-                  placeholder="Your Business"
-                  value={businessName}
-                  onChange={(e) => setBusinessName(e.target.value)}
-                  required={!isLogin}
-                  disabled={loading}
-                />
-              </div>
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="role">Account Type</Label>
+                  <div className="flex gap-4">
+                    <label className="flex items-center space-x-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="role"
+                        value="vendor"
+                        checked={role === "vendor"}
+                        onChange={(e) => setRole(e.target.value as "vendor")}
+                        disabled={loading}
+                        className="w-4 h-4 text-primary focus:ring-primary"
+                      />
+                      <span className="text-sm">Vendor</span>
+                    </label>
+                    <label className="flex items-center space-x-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="role"
+                        value="supplier"
+                        checked={role === "supplier"}
+                        onChange={(e) => setRole(e.target.value as "supplier")}
+                        disabled={loading}
+                        className="w-4 h-4 text-primary focus:ring-primary"
+                      />
+                      <span className="text-sm">Supplier</span>
+                    </label>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="businessName">Business Name</Label>
+                  <Input
+                    id="businessName"
+                    type="text"
+                    placeholder="Your Business"
+                    value={businessName}
+                    onChange={(e) => setBusinessName(e.target.value)}
+                    required={!isLogin}
+                    disabled={loading}
+                  />
+                </div>
+              </>
             )}
             
             <div className="space-y-2">
@@ -195,6 +231,7 @@ const Auth = () => {
                 onClick={() => {
                   setIsLogin(!isLogin);
                   setBusinessName("");
+                  setRole("vendor");
                 }}
                 className="text-primary hover:underline"
                 disabled={loading}
