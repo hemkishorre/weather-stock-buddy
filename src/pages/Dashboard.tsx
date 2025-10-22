@@ -103,7 +103,7 @@ const Dashboard = () => {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_OUT") {
-        navigate("/auth");
+        navigate("/");
       } else if (session) {
         setUser(session.user);
       }
@@ -115,6 +115,7 @@ const Dashboard = () => {
   const handleLogout = async () => {
     await supabase.auth.signOut();
     toast.success("Logged out successfully");
+    navigate("/");
   };
 
   const handleViewProducts = (wholesalerId: string) => {

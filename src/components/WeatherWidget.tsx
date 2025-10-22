@@ -3,8 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Cloud, CloudRain, Sun, Wind, RefreshCw, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { LocationSearch } from "@/components/LocationSearch";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -21,31 +21,17 @@ interface LocationData {
   name: string;
 }
 
-const LOCATIONS: LocationData[] = [
-  { name: "New York, NY", latitude: 40.7128, longitude: -74.0060 },
-  { name: "Los Angeles, CA", latitude: 34.0522, longitude: -118.2437 },
-  { name: "Chicago, IL", latitude: 41.8781, longitude: -87.6298 },
-  { name: "Houston, TX", latitude: 29.7604, longitude: -95.3698 },
-  { name: "Miami, FL", latitude: 25.7617, longitude: -80.1918 },
-  { name: "London, UK", latitude: 51.5074, longitude: -0.1278 },
-  { name: "Paris, France", latitude: 48.8566, longitude: 2.3522 },
-  { name: "Tokyo, Japan", latitude: 35.6762, longitude: 139.6503 },
-  { name: "Sydney, Australia", latitude: -33.8688, longitude: 151.2093 },
-  { name: "Toronto, Canada", latitude: 43.6532, longitude: -79.3832 },
-  { name: "Berlin, Germany", latitude: 52.5200, longitude: 13.4050 },
-  { name: "Mumbai, India", latitude: 19.0760, longitude: 72.8777 },
-  { name: "Singapore", latitude: 1.3521, longitude: 103.8198 },
-  { name: "Dubai, UAE", latitude: 25.2048, longitude: 55.2708 },
-  { name: "Mexico City, Mexico", latitude: 19.4326, longitude: -99.1332 },
-];
-
 const WeatherWidget = () => {
   const [weeklyWeather, setWeeklyWeather] = useState<WeatherData[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [location, setLocation] = useState<LocationData>(LOCATIONS[0]);
+  const [location, setLocation] = useState<LocationData>({ 
+    latitude: 40.7128, 
+    longitude: -74.0060, 
+    name: "New York, NY" 
+  });
   const [showLocationDialog, setShowLocationDialog] = useState(false);
-  const [selectedLocationName, setSelectedLocationName] = useState(LOCATIONS[0].name);
+  const [selectedLocationName, setSelectedLocationName] = useState("New York, NY");
   const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -146,10 +132,29 @@ const WeatherWidget = () => {
       return;
     }
 
-    const selectedLoc = LOCATIONS.find(loc => loc.name === selectedLocationName);
-    if (!selectedLoc) return;
+    if (!selectedLocationName || selectedLocationName.length < 2) {
+      toast.error("Please select a valid location");
+      return;
+    }
 
     try {
+      // Geocode the location name to get lat/lon
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(selectedLocationName)}&limit=1`
+      );
+      const data = await response.json();
+      
+      if (!data || data.length === 0) {
+        toast.error("Could not find coordinates for this location");
+        return;
+      }
+
+      const selectedLoc = {
+        latitude: parseFloat(data[0].lat),
+        longitude: parseFloat(data[0].lon),
+        name: selectedLocationName
+      };
+
       const { error } = await supabase
         .from("profiles")
         .update({
@@ -352,18 +357,11 @@ const WeatherWidget = () => {
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="location-select">Select Location</Label>
-              <Select value={selectedLocationName} onValueChange={setSelectedLocationName}>
-                <SelectTrigger id="location-select" className="w-full">
-                  <SelectValue placeholder="Choose a city" />
-                </SelectTrigger>
-                <SelectContent className="bg-popover z-50">
-                  {LOCATIONS.map((loc) => (
-                    <SelectItem key={loc.name} value={loc.name}>
-                      {loc.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <LocationSearch
+                value={selectedLocationName}
+                onChange={setSelectedLocationName}
+                placeholder="Search for a city..."
+              />
             </div>
 
             <Button onClick={saveLocation} className="w-full" size="lg">

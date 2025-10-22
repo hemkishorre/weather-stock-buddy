@@ -80,7 +80,7 @@ const SupplierDashboard = () => {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!session) {
-        navigate("/auth");
+        navigate("/");
       }
     });
 
@@ -90,7 +90,7 @@ const SupplierDashboard = () => {
   const handleLogout = async () => {
     await supabase.auth.signOut();
     toast.success("Logged out successfully");
-    navigate("/auth");
+    navigate("/");
   };
 
   if (loading) {
