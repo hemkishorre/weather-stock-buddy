@@ -128,73 +128,94 @@ export const InventoryAnalytics = ({ aiSuggestions }: InventoryAnalyticsProps) =
   const totalPotentialSpoilagePrevented = riskMetrics.reduce((sum, m) => sum + (m?.potentialLoss || 0), 0);
   const highRiskItemsProtected = riskMetrics.filter(m => m && m.spoilageRisk === 'high').length;
 
-  // Pie chart data - show individual items at risk
+  // Pie chart data - show individual items at risk with vibrant colors
+  const pieColors = [
+    'hsl(var(--primary))',
+    'hsl(var(--secondary))',
+    'hsl(var(--accent))',
+    'hsl(var(--success))',
+    'hsl(var(--warning))',
+    'hsl(var(--destructive))',
+    'hsl(217 91% 70%)', // primary-glow
+    'hsl(270 60% 70%)', // secondary variant
+  ];
+  
   const riskDistribution = riskMetrics
     .filter(m => m && m.quantityReduced > 0)
-    .map(m => ({
+    .map((m, index) => ({
       name: m!.item,
       value: m!.potentialLoss,
-      color: m!.spoilageRisk === 'high' 
-        ? 'hsl(var(--destructive))' 
-        : m!.spoilageRisk === 'medium' 
-        ? 'hsl(var(--warning))' 
-        : 'hsl(var(--success))'
+      color: pieColors[index % pieColors.length]
     }));
 
   return (
-    <Card className="shadow-card">
+    <Card className="gradient-card border-0 shadow-card hover-lift">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Target className="w-5 h-5" />
-          Cost & Risk Analysis: AI-Powered Inventory Optimization
+          <div className="p-2 rounded-lg gradient-primary shadow-glow-primary">
+            <Target className="w-5 h-5 text-white" />
+          </div>
+          <span className="bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
+            Cost & Risk Analysis: AI-Powered Inventory Optimization
+          </span>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card className="bg-muted/50">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-fade-in">
+          <Card className="gradient-card border-0 shadow-card hover-lift">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Original Plan Cost</p>
-                  <p className="text-2xl font-bold">₹{originalCost.toFixed(2)}</p>
+                  <p className="text-2xl font-bold bg-gradient-to-r from-muted-foreground to-foreground bg-clip-text text-transparent">
+                    ₹{originalCost.toFixed(2)}
+                  </p>
                 </div>
-                <IndianRupee className="w-8 h-8 text-muted-foreground" />
+                <div className="p-3 rounded-lg bg-muted/50">
+                  <IndianRupee className="w-6 h-6 text-muted-foreground" />
+                </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-muted/50">
+          <Card className="gradient-card border-0 shadow-card hover-lift">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">AI Suggested Cost</p>
-                  <p className="text-2xl font-bold">₹{aiSuggestedCost.toFixed(2)}</p>
+                  <p className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                    ₹{aiSuggestedCost.toFixed(2)}
+                  </p>
                 </div>
-                <IndianRupee className="w-8 h-8 text-primary" />
+                <div className="p-3 rounded-lg gradient-primary shadow-glow-primary">
+                  <IndianRupee className="w-6 h-6 text-white" />
+                </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className={isAISavingMoney ? "bg-success/10" : "bg-destructive/10"}>
+          <Card className={`gradient-card border-0 shadow-card hover-lift ${isAISavingMoney ? "ring-2 ring-success/50" : "ring-2 ring-warning/50"}`}>
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">
                     {isAISavingMoney ? "Potential Savings" : "Additional Cost"}
                   </p>
-                  <p className="text-2xl font-bold">
+                  <p className={`text-2xl font-bold ${isAISavingMoney ? "bg-gradient-to-r from-success to-accent bg-clip-text text-transparent" : "bg-gradient-to-r from-warning to-destructive bg-clip-text text-transparent"}`}>
                     ₹{Math.abs(difference).toFixed(2)}
                   </p>
                   <p className="text-sm font-medium mt-1">
                     {Math.abs(percentageChange).toFixed(1)}% {isAISavingMoney ? "savings" : "increase"}
                   </p>
                 </div>
-                {isAISavingMoney ? (
-                  <TrendingDown className="w-8 h-8 text-success" />
-                ) : (
-                  <TrendingUp className="w-8 h-8 text-destructive" />
-                )}
+                <div className={`p-3 rounded-lg ${isAISavingMoney ? "gradient-success shadow-glow-success" : "bg-warning/20"}`}>
+                  {isAISavingMoney ? (
+                    <TrendingDown className="w-6 h-6 text-white" />
+                  ) : (
+                    <TrendingUp className="w-6 h-6 text-warning" />
+                  )}
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -217,42 +238,54 @@ export const InventoryAnalytics = ({ aiSuggestions }: InventoryAnalyticsProps) =
         </div>
 
         {/* Risk Protection Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-          <Card className="bg-success/10 border border-success/20">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6 animate-slide-up">
+          <Card className="gradient-card border-0 shadow-card hover-lift ring-2 ring-success/30">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Items Protected</p>
-                  <p className="text-2xl font-bold">{totalItemsOptimized}</p>
+                  <p className="text-2xl font-bold bg-gradient-to-r from-success to-accent bg-clip-text text-transparent">
+                    {totalItemsOptimized}
+                  </p>
                   <p className="text-xs text-muted-foreground mt-1">Quantities optimized</p>
                 </div>
-                <Shield className="w-8 h-8 text-success" />
+                <div className="p-3 rounded-lg gradient-success shadow-glow-success">
+                  <Shield className="w-6 h-6 text-white" />
+                </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-success/10 border border-success/20">
+          <Card className="gradient-card border-0 shadow-card hover-lift ring-2 ring-accent/30">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Spoilage Prevention</p>
-                  <p className="text-2xl font-bold">₹{totalPotentialSpoilagePrevented.toFixed(2)}</p>
+                  <p className="text-2xl font-bold bg-gradient-to-r from-accent to-success bg-clip-text text-transparent">
+                    ₹{totalPotentialSpoilagePrevented.toFixed(2)}
+                  </p>
                   <p className="text-xs text-muted-foreground mt-1">Potential loss avoided</p>
                 </div>
-                <Shield className="w-8 h-8 text-success" />
+                <div className="p-3 rounded-lg bg-accent/20 shadow-glow-accent">
+                  <Shield className="w-6 h-6 text-accent" />
+                </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-warning/10 border border-warning/20">
+          <Card className="gradient-card border-0 shadow-card hover-lift ring-2 ring-warning/30">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">High-Risk Items</p>
-                  <p className="text-2xl font-bold">{highRiskItemsProtected}</p>
+                  <p className="text-2xl font-bold bg-gradient-to-r from-warning to-destructive bg-clip-text text-transparent">
+                    {highRiskItemsProtected}
+                  </p>
                   <p className="text-xs text-muted-foreground mt-1">Weather-sensitive</p>
                 </div>
-                <AlertTriangle className="w-8 h-8 text-warning" />
+                <div className="p-3 rounded-lg bg-warning/20">
+                  <AlertTriangle className="w-6 h-6 text-warning" />
+                </div>
               </div>
             </CardContent>
           </Card>

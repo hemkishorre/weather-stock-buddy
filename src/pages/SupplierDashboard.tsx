@@ -102,24 +102,31 @@ const SupplierDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-success/5">
+    <div className="min-h-screen gradient-subtle">
       <div className="container mx-auto p-4 md:p-6">
         {/* Header */}
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">
-              {profile?.business_name || "Supplier Dashboard"}
-            </h1>
-            <p className="text-muted-foreground">Manage your inventory and orders</p>
+        <div className="gradient-card border-0 shadow-card backdrop-blur-sm sticky top-0 z-50 mb-6 p-6 rounded-lg animate-fade-in">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-lg gradient-secondary shadow-glow-accent animate-float">
+                <Package className="w-8 h-8 text-white" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-secondary via-accent to-primary bg-clip-text text-transparent">
+                  {profile?.business_name || "Supplier Dashboard"}
+                </h1>
+                <p className="text-muted-foreground">Manage your inventory and orders</p>
+              </div>
+            </div>
+            <Button onClick={handleLogout} variant="outline" size="sm" className="hover-lift">
+              <LogOut className="w-4 h-4 mr-2" />
+              Logout
+            </Button>
           </div>
-          <Button onClick={handleLogout} variant="outline" size="sm">
-            <LogOut className="w-4 h-4 mr-2" />
-            Logout
-          </Button>
         </div>
 
         {!wholesaler ? (
-          <Card>
+          <Card className="gradient-card border-0 shadow-card animate-fade-in">
             <CardContent className="pt-6">
               <p className="text-center text-muted-foreground">
                 Setting up your supplier account...
@@ -127,17 +134,17 @@ const SupplierDashboard = () => {
             </CardContent>
           </Card>
         ) : (
-          <Tabs defaultValue="products" className="space-y-4">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="products">
+          <Tabs defaultValue="products" className="space-y-4 animate-slide-up">
+            <TabsList className="grid w-full grid-cols-3 gradient-card border-0 shadow-card p-1">
+              <TabsTrigger value="products" className="data-[state=active]:gradient-primary data-[state=active]:text-white data-[state=active]:shadow-glow-primary transition-all">
                 <Package className="w-4 h-4 mr-2" />
                 My Products
               </TabsTrigger>
-              <TabsTrigger value="orders">
+              <TabsTrigger value="orders" className="data-[state=active]:gradient-secondary data-[state=active]:text-white data-[state=active]:shadow-glow-accent transition-all">
                 <ShoppingCart className="w-4 h-4 mr-2" />
                 Orders
               </TabsTrigger>
-              <TabsTrigger value="profile">
+              <TabsTrigger value="profile" className="data-[state=active]:gradient-success data-[state=active]:text-white data-[state=active]:shadow-glow-success transition-all">
                 <UserIcon className="w-4 h-4 mr-2" />
                 Profile
               </TabsTrigger>
