@@ -26,6 +26,8 @@ interface Order {
   estimated_delivery: string | null;
   profiles: {
     business_name: string;
+    contact_phone?: string;
+    location?: string;
   };
   order_items: OrderItem[];
 }
@@ -75,18 +77,26 @@ const SupplierOrders = ({ wholesalerId }: SupplierOrdersProps) => {
       return;
     }
 
-    // Fetch vendor profiles separately
+    // Fetch vendor profiles separately with better error handling
     const ordersWithProfiles = await Promise.all(
       (data || []).map(async (order) => {
-        const { data: profile } = await supabase
+        const { data: profile, error: profileError } = await supabase
           .from("profiles")
-          .select("business_name")
+          .select("business_name, contact_phone, location")
           .eq("id", order.vendor_id)
           .single();
 
+        if (profileError) {
+          console.error("Error fetching vendor profile:", profileError);
+        }
+
         return {
           ...order,
-          profiles: profile || { business_name: "Unknown Vendor" },
+          profiles: profile || { 
+            business_name: "Vendor", 
+            contact_phone: "N/A",
+            location: "N/A"
+          },
         };
       })
     );
@@ -144,6 +154,16 @@ const SupplierOrders = ({ wholesalerId }: SupplierOrdersProps) => {
                     <p className="text-sm text-muted-foreground mt-1">
                       Ordered on {format(new Date(order.created_at), "MMM dd, yyyy 'at' h:mm a")}
                     </p>
+                    {order.profiles.contact_phone && (
+                      <p className="text-sm text-muted-foreground">
+                        Contact: {order.profiles.contact_phone}
+                      </p>
+                    )}
+                    {order.profiles.location && (
+                      <p className="text-sm text-muted-foreground">
+                        Location: {order.profiles.location}
+                      </p>
+                    )}
                   </div>
                   <Badge className={getStatusColor(order.status)}>
                     {order.status}
