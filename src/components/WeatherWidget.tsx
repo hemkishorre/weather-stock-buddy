@@ -98,9 +98,10 @@ const WeatherWidget = () => {
     }
   };
 
-  const refreshWeatherData = async (lat?: number, lon?: number) => {
+  const refreshWeatherData = async (lat?: number, lon?: number, days?: number) => {
     const latitude = lat || location.latitude;
     const longitude = lon || location.longitude;
+    const forecastLength = days || forecastDays;
     
     setRefreshing(true);
     try {
@@ -110,7 +111,8 @@ const WeatherWidget = () => {
         body: { 
           latitude,
           longitude,
-          location: locationKey
+          location: locationKey,
+          days: forecastLength
         }
       });
 
@@ -118,7 +120,7 @@ const WeatherWidget = () => {
 
       if (data?.success) {
         toast.success("Weather data updated!");
-        await fetchWeatherFromCache(latitude, longitude);
+        await fetchWeatherFromCache(latitude, longitude, forecastLength);
       }
     } catch (error: any) {
       console.error("Error refreshing weather:", error);
@@ -172,8 +174,8 @@ const WeatherWidget = () => {
       setShowLocationDialog(false);
       toast.success(`Location changed to ${selectedLoc.name}`);
       
-      // Refresh weather for new location
-      await refreshWeatherData(selectedLoc.latitude, selectedLoc.longitude);
+      // Refresh weather for new location with current forecast period
+      await refreshWeatherData(selectedLoc.latitude, selectedLoc.longitude, forecastDays);
     } catch (error: any) {
       console.error("Error saving location:", error);
       toast.error("Failed to save location");
@@ -187,8 +189,9 @@ const WeatherWidget = () => {
       setLoading(true);
       const hasCache = await fetchWeatherFromCache(location.latitude, location.longitude, forecastDays);
       
-      if (!hasCache) {
-        await refreshWeatherData();
+      // If we don't have enough cached data for the selected period, fetch more
+      if (!hasCache || weeklyWeather.length < forecastDays) {
+        await refreshWeatherData(location.latitude, location.longitude, forecastDays);
       }
       
       setLoading(false);

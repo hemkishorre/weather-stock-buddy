@@ -17,10 +17,10 @@ serve(async (req) => {
       throw new Error('TOMORROW_IO_API_KEY is not configured');
     }
 
-    // Get location from request body, default to NYC
-    const { latitude = 40.7128, longitude = -74.0060, location = 'local' } = await req.json().catch(() => ({}));
+    // Get location and days from request body, default to NYC and 7 days
+    const { latitude = 40.7128, longitude = -74.0060, location = 'local', days = 7 } = await req.json().catch(() => ({}));
 
-    console.log(`Fetching weather for location: ${latitude}, ${longitude}`);
+    console.log(`Fetching weather for location: ${latitude}, ${longitude} for ${days} days`);
 
     // Fetch weather data from Tomorrow.io
     const weatherUrl = `https://api.tomorrow.io/v4/weather/forecast?location=${latitude},${longitude}&apikey=${TOMORROW_IO_API_KEY}`;
@@ -44,7 +44,10 @@ serve(async (req) => {
     const dailyForecasts = weatherData.timelines?.daily || [];
     const forecastsToStore = [];
 
-    for (const day of dailyForecasts.slice(0, 7)) { // Store 7 days
+    // Store the requested number of days (up to what's available from API)
+    const daysToStore = Math.min(days, dailyForecasts.length);
+    
+    for (const day of dailyForecasts.slice(0, daysToStore)) {
       const forecastDate = day.time.split('T')[0];
       const values = day.values;
 
