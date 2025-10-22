@@ -4,22 +4,20 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { CloudRain, Package, ShoppingCart, TrendingUp, Users, Zap } from "lucide-react";
-
 const Landing = () => {
   const navigate = useNavigate();
-
   useEffect(() => {
     const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
+      const {
+        data: {
+          session
+        }
+      } = await supabase.auth.getSession();
       if (session) {
         // Check user role to redirect appropriately
-        const { data: roleData } = await supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", session.user.id)
-          .single();
-
+        const {
+          data: roleData
+        } = await supabase.from("user_roles").select("role").eq("user_id", session.user.id).single();
         if (roleData?.role === "supplier") {
           navigate("/supplier-dashboard");
         } else {
@@ -27,17 +25,14 @@ const Landing = () => {
         }
       }
     };
-
     checkAuth();
   }, [navigate]);
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-success/10">
+  return <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-success/10">
       {/* Hero Section */}
       <header className="container mx-auto px-4 py-6">
         <nav className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-full bg-gradient-primary flex items-center justify-center">
+            <div className="w-10 h-10 rounded-full bg-gradient-primary flex items-center justify-center bg-sky-500">
               <CloudRain className="w-6 h-6 text-primary-foreground" />
             </div>
             <span className="text-xl font-bold">Smart Supply Tracker</span>
@@ -225,8 +220,6 @@ const Landing = () => {
           <p>&copy; 2025 Smart Supply Tracker. All rights reserved.</p>
         </div>
       </footer>
-    </div>
-  );
+    </div>;
 };
-
 export default Landing;
