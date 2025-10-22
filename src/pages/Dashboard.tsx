@@ -242,26 +242,32 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen gradient-subtle">
       {/* Header */}
-      <header className="border-b bg-card shadow-sm">
+      <header className="border-b gradient-card shadow-card backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-primary flex items-center justify-center">
-                <Store className="w-5 h-5 text-primary-foreground" />
+            <div className="flex items-center gap-3 animate-fade-in">
+              <div className="w-12 h-12 rounded-2xl gradient-primary shadow-glow-primary flex items-center justify-center animate-float">
+                <Store className="w-6 h-6 text-primary-foreground" />
               </div>
               <div>
-                <h1 className="text-xl font-bold">Smart Supply Tracker</h1>
+                <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                  Smart Supply Tracker
+                </h1>
                 <p className="text-sm text-muted-foreground">
                   {profile?.business_name || "Your Business"}
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 animate-fade-in">
               {cartItemCount > 0 && (
-                <Button onClick={handlePlaceOrder} disabled={placingOrder}>
+                <Button 
+                  onClick={handlePlaceOrder} 
+                  disabled={placingOrder}
+                  className="gradient-primary hover-lift shadow-glow-primary"
+                >
                   {placingOrder ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -275,13 +281,15 @@ const Dashboard = () => {
                   )}
                 </Button>
               )}
-              <Button variant="ghost" size="icon" className="relative">
+              <Button variant="ghost" size="icon" className="relative hover-lift">
                 <Bell className="w-5 h-5" />
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-warning rounded-full text-xs flex items-center justify-center text-white">
-                  {cartItemCount}
-                </span>
+                {cartItemCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-5 h-5 gradient-secondary rounded-full text-xs flex items-center justify-center text-white font-semibold animate-pulse-glow">
+                    {cartItemCount}
+                  </span>
+                )}
               </Button>
-              <Button variant="ghost" size="icon" onClick={handleLogout}>
+              <Button variant="ghost" size="icon" onClick={handleLogout} className="hover-lift">
                 <LogOut className="w-5 h-5" />
               </Button>
             </div>
@@ -299,48 +307,54 @@ const Dashboard = () => {
             <TabsTrigger value="profile">Profile</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="overview" className="space-y-6">
+          <TabsContent value="overview" className="space-y-6 animate-fade-in">
             {/* Stats Cards */}
             <div className="grid gap-4 md:grid-cols-3">
-              <Card className="shadow-card">
+              <Card className="gradient-card border-0 shadow-card hover-lift">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                  <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                    <Package className="w-4 h-4 text-primary" />
                     Cart Items
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{cartItemCount}</div>
-                  <p className="text-xs text-muted-foreground">
+                  <div className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                    {cartItemCount}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
                     ₹{cartTotal.toFixed(2)} total
                   </p>
                 </CardContent>
               </Card>
 
-              <Card className="shadow-card">
+              <Card className="gradient-card border-0 shadow-card hover-lift">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                  <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                    <Store className="w-4 h-4 text-success" />
                     Available Suppliers
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{wholesalers.length}</div>
-                  <p className="text-xs text-muted-foreground">
+                  <div className="text-3xl font-bold bg-gradient-to-r from-success to-accent bg-clip-text text-transparent">
+                    {wholesalers.length}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
                     Ready to serve you
                   </p>
                 </CardContent>
               </Card>
 
-              <Card className="shadow-card">
+              <Card className="gradient-card border-0 shadow-card hover-lift">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                  <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                    <TrendingUp className="w-4 h-4 text-secondary" />
                     Quick Access
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <Button
-                    variant="default"
                     size="sm"
-                    className="w-full"
+                    className="w-full gradient-primary hover-lift shadow-glow-primary"
                     onClick={() => setActiveTab("wholesalers")}
                   >
                     <Package className="w-4 h-4 mr-2" />
