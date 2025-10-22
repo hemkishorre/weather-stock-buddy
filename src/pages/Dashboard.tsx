@@ -10,6 +10,8 @@ import { toast } from "sonner";
 import WeatherWidget from "@/components/WeatherWidget";
 import WholesalerCard from "@/components/WholesalerCard";
 import ProductList from "@/components/ProductList";
+import InventoryNeedsInput from "@/components/InventoryNeedsInput";
+import AISuggestions from "@/components/AISuggestions";
 
 interface Wholesaler {
   id: string;
@@ -209,38 +211,11 @@ const Dashboard = () => {
             {/* Weather Widget */}
             <WeatherWidget />
 
-            {/* AI Suggestions Card */}
-            <Card className="shadow-card bg-gradient-to-br from-success/5 to-success/10 border-success/20">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="w-5 h-5 text-success" />
-                  AI Supply Suggestions
-                </CardTitle>
-                <CardDescription>
-                  Based on weather forecast and typical demand patterns
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-start gap-3 p-3 bg-background rounded-lg">
-                  <div className="w-2 h-2 rounded-full bg-success mt-2"></div>
-                  <div>
-                    <p className="font-medium">Fresh Vegetables</p>
-                    <p className="text-sm text-muted-foreground">
-                      Stock up on tomatoes, lettuce, and onions - pleasant weather increases demand
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3 p-3 bg-background rounded-lg">
-                  <div className="w-2 h-2 rounded-full bg-success mt-2"></div>
-                  <div>
-                    <p className="font-medium">Dairy Products</p>
-                    <p className="text-sm text-muted-foreground">
-                      Consider increasing milk and cheese orders by 15%
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            {/* Inventory Needs Input */}
+            <InventoryNeedsInput />
+
+            {/* AI Suggestions */}
+            <AISuggestions />
           </TabsContent>
 
           <TabsContent value="wholesalers" className="space-y-6">
