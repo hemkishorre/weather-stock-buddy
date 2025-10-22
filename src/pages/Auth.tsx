@@ -143,18 +143,25 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-background to-success/10 p-4">
-      <Card className="w-full max-w-md shadow-card-hover">
+    <div className="min-h-screen flex items-center justify-center gradient-hero p-4 relative overflow-hidden">
+      {/* Animated background elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-20 left-20 w-72 h-72 bg-primary/10 rounded-full blur-3xl animate-float"></div>
+        <div className="absolute bottom-20 right-20 w-96 h-96 bg-secondary/10 rounded-full blur-3xl animate-float" style={{ animationDelay: '1s' }}></div>
+        <div className="absolute top-1/2 left-1/2 w-64 h-64 bg-accent/10 rounded-full blur-3xl animate-float" style={{ animationDelay: '2s' }}></div>
+      </div>
+      
+      <Card className="w-full max-w-md gradient-card border-0 shadow-card-hover backdrop-blur-sm animate-scale-in relative z-10">
         <CardHeader className="space-y-1 text-center">
           <div className="flex justify-center mb-4">
-            <div className="w-12 h-12 rounded-full bg-gradient-primary flex items-center justify-center">
-              <CloudRain className="w-6 h-6 text-primary-foreground" />
+            <div className="w-16 h-16 rounded-full gradient-primary shadow-glow-primary flex items-center justify-center animate-pulse-glow">
+              <CloudRain className="w-8 h-8 text-white" />
             </div>
           </div>
-          <CardTitle className="text-2xl font-bold">
+          <CardTitle className="text-3xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
             {isLogin ? "Welcome Back" : "Get Started"}
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-base">
             {isLogin
               ? "Sign in to manage your inventory"
               : "Create your account to start tracking supplies"}
@@ -165,9 +172,13 @@ const Auth = () => {
             {!isLogin && (
               <>
                 <div className="space-y-2">
-                  <Label htmlFor="role">Account Type</Label>
-                  <div className="flex gap-4">
-                    <label className="flex items-center space-x-2 cursor-pointer">
+                  <Label htmlFor="role" className="text-sm font-semibold">Account Type</Label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <label className={`relative flex items-center justify-center p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                      role === "vendor" 
+                        ? "gradient-primary border-primary shadow-glow-primary text-white" 
+                        : "border-border bg-card hover:border-primary/50"
+                    }`}>
                       <input
                         type="radio"
                         name="role"
@@ -175,11 +186,15 @@ const Auth = () => {
                         checked={role === "vendor"}
                         onChange={(e) => setRole(e.target.value as "vendor" | "supplier")}
                         disabled={loading}
-                        className="w-4 h-4 text-primary focus:ring-primary"
+                        className="sr-only"
                       />
-                      <span className="text-sm font-medium">Vendor</span>
+                      <span className="text-sm font-semibold">🏪 Vendor</span>
                     </label>
-                    <label className="flex items-center space-x-2 cursor-pointer">
+                    <label className={`relative flex items-center justify-center p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                      role === "supplier" 
+                        ? "gradient-secondary border-secondary shadow-glow-accent text-white" 
+                        : "border-border bg-card hover:border-secondary/50"
+                    }`}>
                       <input
                         type="radio"
                         name="role"
@@ -187,9 +202,9 @@ const Auth = () => {
                         checked={role === "supplier"}
                         onChange={(e) => setRole(e.target.value as "vendor" | "supplier")}
                         disabled={loading}
-                        className="w-4 h-4 text-primary focus:ring-primary"
+                        className="sr-only"
                       />
-                      <span className="text-sm font-medium">Supplier</span>
+                      <span className="text-sm font-semibold">📦 Supplier</span>
                     </label>
                   </div>
                 </div>
@@ -259,12 +274,12 @@ const Auth = () => {
 
             <Button
               type="submit"
-              className="w-full"
+              className="w-full gradient-primary hover-lift shadow-glow-primary text-white font-semibold text-base h-12"
               disabled={loading}
             >
               {loading ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                   {isLogin ? "Signing in..." : "Creating account..."}
                 </>
               ) : isLogin ? (
@@ -284,7 +299,7 @@ const Auth = () => {
                   setLocation("");
                   setRole("vendor");
                 }}
-                className="text-primary hover:underline"
+                className="bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent hover:opacity-80 transition-opacity font-semibold"
                 disabled={loading}
               >
                 {isLogin
