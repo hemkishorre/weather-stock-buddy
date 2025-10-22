@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingDown, TrendingUp, DollarSign, Target } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { TrendingDown, TrendingUp, DollarSign, Target, Shield, AlertTriangle } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -102,12 +102,45 @@ export const InventoryAnalytics = ({ aiSuggestions }: InventoryAnalyticsProps) =
 
   const isAISavingMoney = difference > 0;
 
+  // Calculate risk metrics
+  const riskMetrics = originalNeeds.map(need => {
+    const aiSuggestion = aiSuggestions.find(
+      s => s.item.toLowerCase() === need.item_name.toLowerCase()
+    );
+    
+    if (!aiSuggestion) return null;
+    
+    const quantityDiff = need.quantity_needed - aiSuggestion.suggested_quantity;
+    const price = getItemPrice(need.item_name);
+    const potentialLoss = quantityDiff > 0 ? quantityDiff * price : 0;
+    
+    return {
+      item: need.item_name,
+      quantityReduced: Math.max(0, quantityDiff),
+      quantityIncreased: Math.max(0, -quantityDiff),
+      potentialLoss,
+      spoilageRisk: (aiSuggestion as any).spoilage_risk || 'medium',
+      shelfLife: (aiSuggestion as any).estimated_shelf_life || 7
+    };
+  }).filter(Boolean);
+
+  const totalItemsOptimized = riskMetrics.filter(m => m && m.quantityReduced > 0).length;
+  const totalPotentialSpoilagePrevented = riskMetrics.reduce((sum, m) => sum + (m?.potentialLoss || 0), 0);
+  const highRiskItemsProtected = riskMetrics.filter(m => m && m.spoilageRisk === 'high').length;
+
+  // Pie chart data for risk distribution
+  const riskDistribution = [
+    { name: 'High Risk', value: riskMetrics.filter(m => m?.spoilageRisk === 'high').length, color: 'hsl(var(--destructive))' },
+    { name: 'Medium Risk', value: riskMetrics.filter(m => m?.spoilageRisk === 'medium').length, color: 'hsl(var(--warning))' },
+    { name: 'Low Risk', value: riskMetrics.filter(m => m?.spoilageRisk === 'low').length, color: 'hsl(var(--success))' }
+  ].filter(d => d.value > 0);
+
   return (
     <Card className="shadow-card">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Target className="w-5 h-5" />
-          Cost Analysis: Original vs AI Suggestions
+          Cost & Risk Analysis: AI-Powered Inventory Optimization
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -177,17 +210,101 @@ export const InventoryAnalytics = ({ aiSuggestions }: InventoryAnalyticsProps) =
           </ResponsiveContainer>
         </div>
 
-        {/* Insight */}
-        <div className={`p-4 rounded-lg ${isAISavingMoney ? 'bg-success/10 border border-success/20' : 'bg-warning/10 border border-warning/20'}`}>
-          <p className="text-sm font-medium">
-            💡 {isAISavingMoney ? "Cost Optimization Insight" : "Investment Insight"}
-          </p>
-          <p className="text-sm text-muted-foreground mt-2">
-            {isAISavingMoney 
-              ? `By following AI suggestions, you could save $${Math.abs(difference).toFixed(2)} (${Math.abs(percentageChange).toFixed(1)}%) on your inventory costs. The AI has optimized quantities based on weather patterns, demand forecasts, and seasonal trends.`
-              : `AI suggests investing an additional $${Math.abs(difference).toFixed(2)} (${Math.abs(percentageChange).toFixed(1)}%) to meet expected demand. This investment could prevent stockouts and maximize sales opportunities based on weather and demand forecasts.`
-            }
-          </p>
+        {/* Risk Protection Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+          <Card className="bg-success/10 border border-success/20">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Items Protected</p>
+                  <p className="text-2xl font-bold">{totalItemsOptimized}</p>
+                  <p className="text-xs text-muted-foreground mt-1">Quantities optimized</p>
+                </div>
+                <Shield className="w-8 h-8 text-success" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-success/10 border border-success/20">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Spoilage Prevention</p>
+                  <p className="text-2xl font-bold">${totalPotentialSpoilagePrevented.toFixed(2)}</p>
+                  <p className="text-xs text-muted-foreground mt-1">Potential loss avoided</p>
+                </div>
+                <Shield className="w-8 h-8 text-success" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-warning/10 border border-warning/20">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">High-Risk Items</p>
+                  <p className="text-2xl font-bold">{highRiskItemsProtected}</p>
+                  <p className="text-xs text-muted-foreground mt-1">Weather-sensitive</p>
+                </div>
+                <AlertTriangle className="w-8 h-8 text-warning" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Risk Distribution Chart */}
+        {riskDistribution.length > 0 && (
+          <div className="mt-6">
+            <h3 className="text-sm font-semibold mb-4">Spoilage Risk Distribution</h3>
+            <div className="flex items-center justify-center">
+              <ResponsiveContainer width="100%" height={250}>
+                <PieChart>
+                  <Pie
+                    data={riskDistribution}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, value }) => `${name}: ${value}`}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {riskDistribution.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        )}
+
+        {/* Insights */}
+        <div className="space-y-3">
+          <div className={`p-4 rounded-lg ${isAISavingMoney ? 'bg-success/10 border border-success/20' : 'bg-warning/10 border border-warning/20'}`}>
+            <p className="text-sm font-medium">
+              💡 {isAISavingMoney ? "Cost Optimization Insight" : "Investment Insight"}
+            </p>
+            <p className="text-sm text-muted-foreground mt-2">
+              {isAISavingMoney 
+                ? `By following AI suggestions, you could save $${Math.abs(difference).toFixed(2)} (${Math.abs(percentageChange).toFixed(1)}%) on your inventory costs. The AI has optimized quantities based on weather patterns, demand forecasts, and seasonal trends.`
+                : `AI suggests investing an additional $${Math.abs(difference).toFixed(2)} (${Math.abs(percentageChange).toFixed(1)}%) to meet expected demand. This investment could prevent stockouts and maximize sales opportunities based on weather and demand forecasts.`
+              }
+            </p>
+          </div>
+
+          <div className="p-4 rounded-lg bg-primary/10 border border-primary/20">
+            <p className="text-sm font-medium flex items-center gap-2">
+              <Shield className="w-4 h-4" />
+              Risk Protection Summary
+            </p>
+            <p className="text-sm text-muted-foreground mt-2">
+              AI predictions protect you from ${totalPotentialSpoilagePrevented.toFixed(2)} in potential spoilage losses by optimizing {totalItemsOptimized} items. 
+              {highRiskItemsProtected > 0 && ` Special attention given to ${highRiskItemsProtected} high-risk item(s) affected by weather conditions.`}
+              {' '}The recommendations account for shelf life, humidity, temperature, and precipitation forecasts to minimize waste and maximize freshness.
+            </p>
+          </div>
         </div>
       </CardContent>
     </Card>
