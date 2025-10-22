@@ -310,7 +310,7 @@ const WeatherWidget = () => {
               </div>
 
               {/* Forecast Grid */}
-              <div className="grid gap-2 mt-4 grid-cols-7">
+              <div className="grid gap-4 mt-4 grid-cols-7">
                 {weeklyWeather.map((day, index) => (
                   <div 
                     key={day.forecast_date}
