@@ -13,6 +13,8 @@ interface SuggestionWithQuantity {
   priority: string;
   suggested_quantity: number;
   unit: string;
+  estimated_shelf_life?: number;
+  spoilage_risk?: "low" | "medium" | "high";
   matching_products?: Array<{
     id: string;
     name: string;
@@ -54,6 +56,32 @@ const AISuggestionsEnhanced = ({ onAddToCart }: AISuggestionsEnhancedProps) => {
     }
   };
 
+  const getSpoilageRiskColor = (risk?: string): string => {
+    switch (risk?.toLowerCase()) {
+      case "high":
+        return "text-destructive";
+      case "medium":
+        return "text-warning";
+      case "low":
+        return "text-success";
+      default:
+        return "text-muted-foreground";
+    }
+  };
+
+  const getSpoilageRiskBadge = (risk?: string): "destructive" | "default" | "secondary" => {
+    switch (risk?.toLowerCase()) {
+      case "high":
+        return "destructive";
+      case "medium":
+        return "default";
+      case "low":
+        return "secondary";
+      default:
+        return "secondary";
+    }
+  };
+
   const getPriorityVariant = (priority: string): "default" | "secondary" | "destructive" => {
     switch (priority.toLowerCase()) {
       case "high":
@@ -82,7 +110,7 @@ const AISuggestionsEnhanced = ({ onAddToCart }: AISuggestionsEnhancedProps) => {
               AI Smart Suggestions
             </CardTitle>
             <CardDescription>
-              Weather-based recommendations with purchase options
+              Weather & shelf-life optimized recommendations
             </CardDescription>
           </div>
           <Button
@@ -141,11 +169,26 @@ const AISuggestionsEnhanced = ({ onAddToCart }: AISuggestionsEnhancedProps) => {
                     💡 {suggestion.reason}
                   </p>
 
-                  {suggestion.suggested_quantity > 0 && (
-                    <div className="mb-3 p-2 bg-primary/10 rounded text-sm">
-                      <strong>Suggested Quantity:</strong> {suggestion.suggested_quantity} {suggestion.unit}
-                    </div>
-                  )}
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {suggestion.suggested_quantity > 0 && (
+                      <div className="px-3 py-1.5 bg-primary/10 rounded-md text-sm font-medium">
+                        📦 {suggestion.suggested_quantity} {suggestion.unit}
+                      </div>
+                    )}
+                    {suggestion.estimated_shelf_life && (
+                      <div className="px-3 py-1.5 bg-muted rounded-md text-sm">
+                        ⏱️ {suggestion.estimated_shelf_life} days shelf life
+                      </div>
+                    )}
+                    {suggestion.spoilage_risk && (
+                      <Badge variant={getSpoilageRiskBadge(suggestion.spoilage_risk)} className="px-3 py-1.5">
+                        {suggestion.spoilage_risk === "high" && "⚠️"}
+                        {suggestion.spoilage_risk === "medium" && "⚡"}
+                        {suggestion.spoilage_risk === "low" && "✓"}
+                        {" "}{suggestion.spoilage_risk.toUpperCase()} spoilage risk
+                      </Badge>
+                    )}
+                  </div>
 
                   {suggestion.matching_products && suggestion.matching_products.length > 0 && (
                     <div className="space-y-2 mt-3 pt-3 border-t">

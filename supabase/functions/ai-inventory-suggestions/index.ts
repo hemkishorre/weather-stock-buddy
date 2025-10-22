@@ -116,33 +116,58 @@ ${weatherContext}
 Available Product Categories: ${allProducts ? [...new Set(allProducts.map((p: any) => p.category))].join(', ') : 'Various'}
 
 Provide 3-5 specific, actionable recommendations considering:
-1. How weather conditions affect demand for specific items over the week
-2. Priority levels of inventory needs
-3. Temperature impacts and patterns across multiple days
-4. Practical quantity adjustments based on weekly weather trends
-5. Suggest realistic quantities to purchase (e.g., "15 kg", "20 units")
+1. **Shelf Life & Spoilage**: Calculate quantities based on typical shelf life of each item type:
+   - Fresh vegetables/fruits: 3-7 days depending on type
+   - Dairy products: 5-14 days
+   - Baked goods: 2-5 days
+   - Dry goods: 30+ days
+   - Meat/fish: 1-3 days (fresh), longer if frozen
+2. **Weather Impact on Shelf Life**: High humidity and heat reduce shelf life significantly
+   - In hot/humid weather, reduce fresh produce quantities by 20-30%
+   - In cool/dry weather, you can order slightly more
+3. **Weekly Demand Patterns**: Match quantities to the 7-day weather forecast
+   - Don't over-order perishables if hot weather is coming
+   - Order more of items that benefit from the weather conditions
+4. **Priority levels** of inventory needs
+5. **Practical quantity adjustments** to minimize waste while meeting demand
 
 Format your response as a JSON array of suggestions, each with:
 - "item": the inventory item or category
 - "recommendation": specific action to take
-- "reason": why this is recommended based on weather/demand patterns
+- "reason": detailed explanation including shelf life considerations and weather impact
 - "priority": "high", "medium", or "low"
-- "suggested_quantity": numeric value (e.g., 15, 20, 30)
+- "suggested_quantity": numeric value optimized for shelf life (e.g., 15, 20, 30)
 - "unit": measurement unit (e.g., "kg", "units", "boxes")
+- "estimated_shelf_life": typical shelf life in days
+- "spoilage_risk": "low", "medium", or "high" based on weather conditions
 
 Example format:
 [
   {
-    "item": "Fresh Vegetables",
-    "recommendation": "Increase tomato order to 25 kg total",
-    "reason": "Sunny weather for 5 days increases demand for fresh salads and cold dishes",
+    "item": "Tomatoes",
+    "recommendation": "Order 15 kg - reduced from usual 25 kg due to high humidity",
+    "reason": "Fresh tomatoes have a 5-day shelf life. With 85% humidity and 28°C temperatures forecasted, spoilage risk is high. Ordering 15 kg ensures freshness while meeting demand without waste.",
     "priority": "high",
-    "suggested_quantity": 25,
-    "unit": "kg"
+    "suggested_quantity": 15,
+    "unit": "kg",
+    "estimated_shelf_life": 5,
+    "spoilage_risk": "high"
+  },
+  {
+    "item": "Rice",
+    "recommendation": "Order full 50 kg - dry goods unaffected by weather",
+    "reason": "Rice has 180+ day shelf life and is unaffected by humidity when stored properly. Weather conditions don't impact ordering decisions for dry goods.",
+    "priority": "medium",
+    "suggested_quantity": 50,
+    "unit": "kg",
+    "estimated_shelf_life": 180,
+    "spoilage_risk": "low"
   }
 ]
 
-If no inventory items are specified, provide general recommendations for a food vendor based on the weather patterns.`;
+**CRITICAL**: Always factor in shelf life when suggesting quantities. It's better to order slightly less of perishables and restock mid-week than to risk spoilage and waste.
+
+If no inventory items are specified, provide general recommendations for a food vendor based on the weather patterns and shelf life considerations.`;
 
     console.log('Calling AI with context...');
 
