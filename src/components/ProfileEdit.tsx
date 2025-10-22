@@ -110,7 +110,7 @@ const ProfileEdit = ({ userId }: ProfileEditProps) => {
             <Input
               id="contactPhone"
               type="tel"
-              placeholder="+1 234 567 8900"
+              placeholder="+91 234 567 8900"
               value={contactPhone}
               onChange={(e) => setContactPhone(e.target.value)}
               required
