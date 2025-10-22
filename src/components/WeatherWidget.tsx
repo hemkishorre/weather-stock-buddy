@@ -309,26 +309,26 @@ const WeatherWidget = () => {
                 <span>Humidity: {weeklyWeather[0].humidity}%</span>
               </div>
 
-              {/* Forecast Grid - Dynamic based on selected period */}
-              <div className="grid gap-2 mt-4 grid-cols-7">
+              {/* Forecast Grid */}
+              <div className="grid gap-3 mt-4 grid-cols-7">
                 {weeklyWeather.map((day, index) => (
                   <div 
                     key={day.forecast_date}
-                    className={`flex flex-col items-center p-2.5 rounded-lg transition-base ${
+                    className={`flex flex-col items-center p-4 rounded-lg transition-base ${
                       index === 0 ? 'bg-primary/10' : 'bg-muted/50 hover:bg-muted'
                     }`}
                   >
-                    <p className="text-xs font-semibold mb-0.5">
+                    <p className="text-sm font-semibold mb-1">
                       {getDayName(day.forecast_date)}
                     </p>
-                    <p className="text-[10px] text-muted-foreground mb-1">
+                    <p className="text-xs text-muted-foreground mb-2">
                       {getFormattedDate(day.forecast_date)}
                     </p>
-                    <div className="my-1">
+                    <div className="my-2">
                       {getWeatherIcon(day.condition)}
                     </div>
-                    <p className="text-sm font-bold">{Math.round(day.temperature)}°</p>
-                    <p className="text-[10px] text-muted-foreground">{day.humidity}%</p>
+                    <p className="text-lg font-bold mb-1">{Math.round(day.temperature)}°</p>
+                    <p className="text-xs text-muted-foreground">{day.humidity}%</p>
                   </div>
                 ))}
               </div>
