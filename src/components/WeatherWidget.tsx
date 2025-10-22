@@ -66,7 +66,7 @@ const WeatherWidget = () => {
   const fetchWeatherFromCache = async (lat: number, lon: number) => {
     try {
       const today = new Date();
-      const dates = Array.from({ length: 7 }, (_, i) => {
+      const dates = Array.from({ length: 6 }, (_, i) => {
         const date = new Date(today);
         date.setDate(today.getDate() + i);
         return date.toISOString().split('T')[0];
@@ -110,7 +110,7 @@ const WeatherWidget = () => {
           latitude,
           longitude,
           location: locationKey,
-          days: 7
+          days: 6
         }
       });
 
@@ -310,7 +310,7 @@ const WeatherWidget = () => {
               </div>
 
               {/* Forecast Grid */}
-              <div className="grid gap-4 mt-4 grid-cols-7">
+              <div className="grid gap-4 mt-4 grid-cols-6">
                 {weeklyWeather.map((day, index) => (
                   <div 
                     key={day.forecast_date}
